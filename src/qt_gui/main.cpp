@@ -47,14 +47,36 @@ int main(int argc, char* argv[]) {
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
 
+    // Qt plugin lookup must not depend on the user's environment. Variables left behind by other
+    // Qt programs make Qt load a foreign or missing platform plugin and fail with
+    // "no Qt platform plugin could be initialized". Always look next to the executable first.
+    qunsetenv("QT_QPA_PLATFORM_PLUGIN_PATH");
+    qunsetenv("QT_PLUGIN_PATH");
+    qunsetenv("QT_QPA_PLATFORM");
+    {
+        std::wstring exe_path(MAX_PATH, L'\0');
+        DWORD len = 0;
+        while ((len = GetModuleFileNameW(nullptr, exe_path.data(),
+                                         static_cast<DWORD>(exe_path.size()))) == exe_path.size()) {
+            exe_path.resize(exe_path.size() * 2);
+        }
+        exe_path.resize(len);
+        const std::filesystem::path exe_dir = std::filesystem::path(exe_path).parent_path();
+        QCoreApplication::addLibraryPath(
+            QString::fromStdWString((exe_dir / L"qtplugins").wstring()));
+        QCoreApplication::addLibraryPath(QString::fromStdWString(exe_dir.wstring()));
+    }
+
     int argc_w;
     wchar_t** argv_w = CommandLineToArgvW(GetCommandLineW(), &argc_w);
 
     QApplication* a = nullptr;
 
+    // QApplication keeps argc/argv for its whole lifetime, so they must outlive this block.
+    static std::vector<std::string> argv_utf8;
+    static std::vector<char*> argv_converted;
+
     if (argv_w != nullptr) {
-        std::vector<std::string> argv_utf8;
-        std::vector<char*> argv_converted;
         argv_utf8.reserve(argc_w);
         argv_converted.reserve(argc_w + 1);
 
@@ -65,7 +87,8 @@ int main(int argc, char* argv[]) {
         }
         argv_converted.push_back(nullptr);
 
-        a = new QApplication(argc_w, argv_converted.data());
+        static int argc_q = argc_w;
+        a = new QApplication(argc_q, argv_converted.data());
 
         LocalFree(argv_w);
     } else {
