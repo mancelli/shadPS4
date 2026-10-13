@@ -395,6 +395,14 @@ if (NOT TARGET cryptopp::cryptopp)
     file(COPY cryptopp DESTINATION cryptopp FILES_MATCHING PATTERN "*.h")
     # remove externals/cryptopp from include directories because it contains a conflicting zlib.h file
     set_target_properties(cryptopp PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_BINARY_DIR}/cryptopp")
+    # cryptopp-cmake applies these definitions to the library sources only. Code including the
+    # headers must see the same ones: CRYPTOPP_DISABLE_ASM turns off CRYPTOPP_BOOL_ALIGN16, and
+    # with a mismatch Integer/SecBlock memory is allocated aligned in the emulator and freed
+    # unaligned in the library (heap corruption in the RSA key decryption of a PKG install).
+    target_compile_definitions(cryptopp INTERFACE CRYPTOPP_DISABLE_AESNI=1 CRYPTOPP_DISABLE_AVX2=1)
+    if(WIN32)
+        target_compile_definitions(cryptopp INTERFACE CRYPTOPP_DISABLE_ASM=1)
+    endif()
 endif()
 
 # cpp-httplib
