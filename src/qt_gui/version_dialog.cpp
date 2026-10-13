@@ -24,6 +24,7 @@
 #include <common/path_util.h>
 
 #include "common/config.h"
+#include "common/string_util.h"
 #include "core/file_format/pkg.h"
 #include "pkg_installer/pkg_installer.h"
 #include "qt_gui/compatibility_info.h"
@@ -1305,10 +1306,23 @@ void VersionDialog::InstallPkgFiles(const QStringList& pkgPaths) {
         }
 
         const QString titleId = QString::fromStdString(meta.title_id);
-        const bool isUpdate = (meta.flags & kUpdateFlagsMask) != 0;
+        const bool isDlc = meta.category == "ac";
+        const bool isUpdate =
+            !isDlc && ((meta.flags & kUpdateFlagsMask) != 0 || meta.category == "gp");
 
         std::filesystem::path targetDir;
-        if (isUpdate && Config::getSeparateUpdateEnabled()) {
+        if (isDlc) {
+            // Additional content goes to <DLC folder>/<title id>/<entitlement label>, where the
+            // emulator looks for it (see app_content.cpp), not into the game folder.
+            const auto parts = Common::SplitString(meta.content_id, '-');
+            if (parts.size() < 3 || parts[2].empty()) {
+                failures << tr("%1: DLC without a valid CONTENT_ID (%2)")
+                                .arg(QFileInfo(pkgPathQ).fileName(),
+                                     QString::fromStdString(meta.content_id));
+                continue;
+            }
+            targetDir = Config::getAddonDirectory() / meta.title_id / parts[2];
+        } else if (isUpdate && Config::getSeparateUpdateEnabled()) {
             auto baseDir = findExistingGameDir(meta.title_id);
             if (baseDir.empty()) {
                 // Base game isn't installed yet: put the update where the
@@ -1331,7 +1345,9 @@ void VersionDialog::InstallPkgFiles(const QStringList& pkgPaths) {
 
         progress.setLabelText(tr("Installing %1 (%2)%3...")
                                   .arg(QFileInfo(pkgPathQ).fileName(), titleId,
-                                       isUpdate ? tr(" [update]") : QString()));
+                                       isDlc      ? tr(" [DLC]")
+                                       : isUpdate ? tr(" [update]")
+                                                  : QString()));
         progress.setValue(0);
         QCoreApplication::processEvents();
 

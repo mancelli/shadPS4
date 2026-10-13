@@ -13,6 +13,8 @@ struct PkgMetadata {
     uint64_t pkg_size = 0;
     uint32_t flags = 0;
     uint32_t file_count = 0;
+    std::string category;   // param.sfo CATEGORY: "gd" game, "gp" patch, "ac" additional content
+    std::string content_id; // param.sfo CONTENT_ID, e.g. UP0006-CUSA14204_00-ENTITLEMENTLABEL0
 };
 
 using ProgressCallback = std::function<void(uint32_t extracted, uint32_t total)>;
