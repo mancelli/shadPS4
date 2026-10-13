@@ -98,6 +98,10 @@ These changes are in the [`beta`](../../tree/beta) branch. Its builds are on the
 | The launcher's updater pointed to Shadlix builds | Updates come only from this fork and are checked at startup by default (the launcher asks before downloading). Channels: **Main** (releases) and **Beta** (newest `beta` build, pre-release `beta-latest`) |
 | PKG installer put DLC into the game folder | DLC is installed into the DLC folder; folder errors are shown instead of closing the launcher |
 | Crashes left no trace in the log | The reason of a crash (exception, address, module, thread) is written to the log |
+| UFC 4: fighters without heads (only hair and eyes) with Readback Speed = Disable | UFC 4 always runs with at least **Low** readbacks; the setting's description explains why |
+| The launcher closed while installing a PKG | Fixed (memory corruption in the PKG key decryption) |
+| Installing a large PKG froze the launcher, progress stuck at 0 % | Files are extracted in the background on several threads (about 2.5x faster), progress counts bytes, Cancel works |
+| The launcher crashed every time it was closed (silently) | Fixed |
 
 ## More information
 
