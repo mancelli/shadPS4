@@ -223,7 +223,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
     installEventFilter(this);
     setAttribute(Qt::WA_DeleteOnClose);
     g_MainWindow = this;
-    m_ipc_client = std::make_shared<IpcClient>(this);
+    // No Qt parent: the shared_ptrs own the client. With this window as parent, ~QObject also
+    // deleted it, with delete on memory that make_shared allocated (heap corruption, the launcher
+    // crashed with 0xC0000374 every time it was closed).
+    m_ipc_client = std::make_shared<IpcClient>();
     IpcClient::SetInstance(m_ipc_client);
     initializeGamepad();
 }
@@ -234,6 +237,10 @@ MainWindow::~MainWindow() {
     Config::saveMainWindow(config_dir / "config.toml");
     if (g_MainWindow == this)
         g_MainWindow = nullptr;
+    // Release the client while the application still exists; the game list widgets that hold a
+    // copy drop theirs when Qt deletes them right after this.
+    IpcClient::SetInstance(nullptr);
+    m_ipc_client.reset();
 }
 
 std::string MainWindow::GetRunningGameSerial() const {
