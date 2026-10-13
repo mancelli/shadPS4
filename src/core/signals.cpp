@@ -4,7 +4,9 @@
 #include "common/arch.h"
 #include "common/assert.h"
 #include "common/decoder.h"
+#include "common/logging/backend.h"
 #include "common/signal_context.h"
+#include "common/thread.h"
 #include "core/libraries/kernel/threads/exception.h"
 #include "core/libraries/kernel/threads/pthread.h"
 #include "core/signals.h"
@@ -61,6 +63,43 @@ static LONG WINAPI SignalHandler(EXCEPTION_POINTERS* pExp) noexcept {
 
     // Vectored handlers run before frame-based SEH and language-runtime handlers. Exceptions that
     // do not belong to the emulator must continue through normal Windows dispatch.
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+// Last chance before Windows ends the process. Without this a crash (in the emulator, the game or
+// the GPU driver) leaves no trace in the log: the log just stops.
+static LONG WINAPI UnhandledExceptionLogger(EXCEPTION_POINTERS* pExp) noexcept {
+    if (pExp == nullptr || pExp->ExceptionRecord == nullptr) {
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    const auto* record = pExp->ExceptionRecord;
+    if (record->ExceptionCode == EXCEPTION_BREAKPOINT) {
+        // ASSERT/UNREACHABLE end with a breakpoint after logging their own message.
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    void* const address = record->ExceptionAddress;
+    char module_path[MAX_PATH] = "<not in a Windows module: game code or JIT>";
+    uintptr_t module_offset = 0;
+    HMODULE module = nullptr;
+    if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                               GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                           static_cast<LPCSTR>(address), &module) &&
+        GetModuleFileNameA(module, module_path, MAX_PATH) != 0) {
+        module_offset = reinterpret_cast<uintptr_t>(address) - reinterpret_cast<uintptr_t>(module);
+    }
+    LOG_CRITICAL(
+        Core, "Unhandled exception {:#010x} at {} ({}+{:#x}) in thread '{}'{}{}",
+        static_cast<u32>(record->ExceptionCode), fmt::ptr(address), module_path, module_offset,
+        Common::GetCurrentThreadName(),
+        record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION && record->NumberParameters >= 2
+            ? (record->ExceptionInformation[0] == 0   ? ", reading "
+               : record->ExceptionInformation[0] == 1 ? ", writing "
+                                                      : ", executing ")
+            : "",
+        record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION && record->NumberParameters >= 2
+            ? fmt::format("{:#x}", record->ExceptionInformation[1])
+            : "");
+    Common::Log::Stop();
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
@@ -135,6 +174,7 @@ SignalDispatch::SignalDispatch() {
 #if defined(_WIN32)
     ASSERT_MSG(handle = AddVectoredExceptionHandler(0, SignalHandler),
                "Failed to register exception handler.");
+    SetUnhandledExceptionFilter(UnhandledExceptionLogger);
 #else
     struct sigaction action{};
     action.sa_sigaction = SignalHandler;
