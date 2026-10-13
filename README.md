@@ -16,8 +16,8 @@ the official shadPS4.
 
 > [!WARNING]
 > **Windows + Intel Arc only.** Everything was written and tested on **Windows 11 with an Intel Arc B580** (a few
-> checks on a Radeon 780M) with UFC 4. The Linux and macOS builds are made automatically by CI and are **not tested
-> and not supported** (their release files start with `UNTESTED`). Other games were not tested.
+> checks on a Radeon 780M) with UFC 4. Builds are made for Windows only. The Linux and macOS files in
+> older releases (names start with `UNTESTED`) were **not tested and are not supported**. Other games were not tested.
 >
 > **NVIDIA:** the Intel workarounds against black squares are also enabled on NVIDIA GPUs. This is **untested on
 > NVIDIA hardware**; please report results with **Collect Debug Logs** enabled (see below).
