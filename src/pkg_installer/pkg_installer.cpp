@@ -1,8 +1,12 @@
 // SPDX-FileCopyrightText: Copyright 2025-2026 shadLauncher4 Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <algorithm>
+#include <chrono>
 #include <filesystem>
+#include <mutex>
 #include <string>
+#include <thread>
 #include <vector>
 #include "core/file_format/pkg.h"
 #include "core/file_format/psf.h"
@@ -35,7 +39,8 @@ std::optional<std::string> ReadPkgMetadata(const std::filesystem::path& pkg_path
 std::optional<std::string> ExtractPkg(const std::filesystem::path& pkg_path,
                                       const std::filesystem::path& out_dir,
                                       const std::vector<int>& indices,
-                                      const ProgressCallback& progress_cb) try {
+                                      const ProgressCallback& progress_cb,
+                                      const std::atomic<bool>* cancel) try {
     if (!std::filesystem::exists(pkg_path)) {
         return std::string("PKG file does not exist: ") + pkg_path.string();
     }
@@ -60,19 +65,68 @@ std::optional<std::string> ExtractPkg(const std::filesystem::path& pkg_path,
             list.push_back(static_cast<int>(i));
     }
 
-    uint32_t extracted = 0;
-    for (int idx : list) {
-        try {
-            pkg.ExtractFiles(idx);
-        } catch (const std::exception& e) {
-            return std::string("Failed extracting file index ") + std::to_string(idx) + ": " +
-                   e.what();
-        } catch (...) {
-            return std::string("Unknown error extracting file index ") + std::to_string(idx);
+    // Decryption and decompression are CPU bound: extract several files at once, like the
+    // shadPS4 Qt launcher did with QtConcurrent::map.
+    const uint64_t total_bytes = pkg.GetTotalFileBytes();
+    std::atomic<size_t> next{0};
+    std::atomic<bool> stop{false};
+    std::mutex error_mutex;
+    std::optional<std::string> error;
+    const auto set_error = [&](std::string message) {
+        std::scoped_lock lk{error_mutex};
+        if (!error) {
+            error = std::move(message);
         }
-        ++extracted;
-        if (progress_cb)
-            progress_cb(extracted, list.size());
+        stop = true;
+    };
+    const unsigned num_threads = std::clamp(std::thread::hardware_concurrency(), 1u, 8u);
+    std::atomic<unsigned> running{num_threads};
+    const auto worker = [&] {
+        while (!stop && !(cancel && cancel->load())) {
+            const size_t i = next++;
+            if (i >= list.size()) {
+                break;
+            }
+            const int idx = list[i];
+            try {
+                pkg.ExtractFiles(idx);
+            } catch (const std::exception& e) {
+                set_error(std::string("Failed extracting file index ") + std::to_string(idx) +
+                          ": " + e.what());
+            } catch (...) {
+                set_error(std::string("Unknown error extracting file index ") +
+                          std::to_string(idx));
+            }
+        }
+        --running;
+    };
+    std::vector<std::thread> threads;
+    for (unsigned t = 0; t < num_threads; ++t) {
+        try {
+            threads.emplace_back(worker);
+        } catch (const std::exception& e) {
+            set_error(std::string("Failed to start an extraction thread: ") + e.what());
+            running -= num_threads - t;
+            break;
+        }
+    }
+    while (running > 0) {
+        if (progress_cb) {
+            progress_cb(pkg.GetExtractedBytes(), total_bytes);
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    for (auto& thread : threads) {
+        thread.join();
+    }
+    if (error) {
+        return error;
+    }
+    if (cancel && cancel->load()) {
+        return std::string("Installation cancelled");
+    }
+    if (progress_cb) {
+        progress_cb(pkg.GetExtractedBytes(), total_bytes);
     }
     return std::nullopt;
 } catch (const std::exception& e) {

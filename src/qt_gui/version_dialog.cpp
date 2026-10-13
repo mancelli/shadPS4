@@ -1,13 +1,16 @@
 ﻿// SPDX-FileCopyrightText: Copyright 2025 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <atomic>
 #include <cstdlib>
 #include <QCoreApplication>
 #include <QDir>
 #include <QDragEnterEvent>
 #include <QDropEvent>
+#include <QEventLoop>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFutureWatcher>
 #include <QInputDialog>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -20,6 +23,7 @@
 #include <QRegularExpression>
 #include <QTextStream>
 #include <QTimer>
+#include <QtConcurrent/QtConcurrentRun>
 #include <QVBoxLayout>
 #include <common/path_util.h>
 
@@ -1281,7 +1285,9 @@ void VersionDialog::InstallPkgFiles(const QStringList& pkgPaths) {
 
     QProgressDialog progress(tr("Preparing to install PKG..."), tr("Cancel"), 0, 100, this);
     progress.setWindowTitle(tr("Installing PKG"));
-    progress.setWindowModality(Qt::WindowModal);
+    // Application modal: the event loop keeps running during the extraction, and nothing else
+    // (a second install, starting a game) may happen meanwhile.
+    progress.setWindowModality(Qt::ApplicationModal);
     progress.setMinimumDuration(0);
     progress.setAutoClose(false);
     progress.setAutoReset(false);
@@ -1351,13 +1357,35 @@ void VersionDialog::InstallPkgFiles(const QStringList& pkgPaths) {
         progress.setValue(0);
         QCoreApplication::processEvents();
 
-        const auto extractErr =
-            ExtractPkg(pkgPath, targetDir, {}, [&](uint32_t extracted, uint32_t total) {
-                if (total > 0) {
-                    progress.setValue(static_cast<int>((extracted * 100ull) / total));
-                }
-                QCoreApplication::processEvents();
-            });
+        // Extract on worker threads; this thread only shows the progress, so the window stays
+        // responsive while a multi-GB file is being written.
+        std::atomic<uint64_t> done_bytes{0};
+        std::atomic<uint64_t> total_bytes{0};
+        std::atomic<bool> cancel{false};
+        QFutureWatcher<std::optional<std::string>> watcher;
+        QEventLoop loop;
+        connect(&watcher, &QFutureWatcherBase::finished, &loop, &QEventLoop::quit);
+        QTimer timer;
+        connect(&timer, &QTimer::timeout, &progress, [&] {
+            if (const uint64_t total = total_bytes.load(); total > 0) {
+                progress.setValue(static_cast<int>(done_bytes.load() * 100 / total));
+            }
+            if (progress.wasCanceled()) {
+                cancel = true;
+            }
+        });
+        watcher.setFuture(QtConcurrent::run([&] {
+            return ExtractPkg(pkgPath, targetDir, {},
+                              [&](uint64_t extracted, uint64_t total) {
+                                  done_bytes = extracted;
+                                  total_bytes = total;
+                              },
+                              &cancel);
+        }));
+        timer.start(100);
+        loop.exec();
+        timer.stop();
+        const auto extractErr = watcher.result();
 
         if (extractErr) {
             failures << tr("%1: %2").arg(QFileInfo(pkgPathQ).fileName(),

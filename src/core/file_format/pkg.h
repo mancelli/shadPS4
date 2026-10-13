@@ -4,6 +4,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <filesystem>
 #include <string>
 #include <unordered_map>
@@ -103,6 +104,7 @@ public:
     ~PKG();
 
     bool Open(const std::filesystem::path& filepath, std::string& failreason);
+    // Safe to call for different indices from several threads after Extract().
     void ExtractFiles(const int index);
     bool Extract(const std::filesystem::path& filepath, const std::filesystem::path& extract,
                  std::string& failreason);
@@ -115,6 +117,14 @@ public:
 
     u64 GetPkgSize() {
         return pkgSize;
+    }
+
+    // Size of all files ExtractFiles() writes, available after Extract().
+    u64 GetTotalFileBytes() const;
+
+    // Bytes ExtractFiles() has written so far; may be read from any thread.
+    u64 GetExtractedBytes() const {
+        return extracted_bytes.load(std::memory_order_relaxed);
     }
 
     std::string GetPkgFlags() {
@@ -157,6 +167,7 @@ private:
     std::vector<Inode> iNodeBuf;
     std::vector<u64> sectorMap;
     u64 pfsc_offset;
+    std::atomic<u64> extracted_bytes{0};
 
     std::array<u8, 32> dk3_;
     std::array<u8, 32> ivKey;

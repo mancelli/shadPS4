@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #pragma once
+#include <atomic>
+#include <cstdint>
 #include <filesystem>
 #include <functional>
 #include <optional>
@@ -17,16 +19,20 @@ struct PkgMetadata {
     std::string content_id; // param.sfo CONTENT_ID, e.g. UP0006-CUSA14204_00-ENTITLEMENTLABEL0
 };
 
-using ProgressCallback = std::function<void(uint32_t extracted, uint32_t total)>;
+// Bytes of file data written so far and in total.
+using ProgressCallback = std::function<void(uint64_t extracted_bytes, uint64_t total_bytes)>;
 
 // Opens the PKG and fills metadata. Returns error string on failure.
 std::optional<std::string> ReadPkgMetadata(const std::filesystem::path& pkg_path, PkgMetadata& out);
 
-// Extracts the PKG. If indices empty -> all files. Reports progress per extracted file.
+// Extracts the PKG. If indices empty -> all files. Files are extracted on several threads;
+// progress_cb is called on the calling thread about every 100 ms. Setting *cancel stops before
+// the next file and returns an error.
 std::optional<std::string> ExtractPkg(const std::filesystem::path& pkg_path,
                                       const std::filesystem::path& out_dir,
                                       const std::vector<int>& indices,
-                                      const ProgressCallback& progress_cb);
+                                      const ProgressCallback& progress_cb,
+                                      const std::atomic<bool>* cancel = nullptr);
 
 // Helper to gather .pkg files in a directory (non-recursive or recursive as chosen).
 std::vector<std::filesystem::path> ListPkgFiles(const std::filesystem::path& dir, bool recursive);

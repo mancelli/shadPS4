@@ -403,18 +403,30 @@ bool PKG::Extract(const std::filesystem::path& filepath, const std::filesystem::
     return true;
 }
 
+u64 PKG::GetTotalFileBytes() const {
+    u64 total = 0;
+    for (const auto& entry : fsTable) {
+        if (entry.type == PFS_FILE && entry.inode < iNodeBuf.size()) {
+            total += iNodeBuf[entry.inode].Size;
+        }
+    }
+    return total;
+}
+
 void PKG::ExtractFiles(const int index) {
     int inode_number = fsTable[index].inode;
     int inode_type = fsTable[index].type;
     std::string inode_name = fsTable[index].name;
 
-    if (inode_type == PFS_FILE) {
+    // find() instead of operator[]: several threads extract at once and must not insert.
+    const auto path_it = extractPaths.find(inode_number);
+    if (inode_type == PFS_FILE && path_it != extractPaths.end()) {
         int sector_loc = iNodeBuf[inode_number].loc;
         int nblocks = iNodeBuf[inode_number].Blocks;
         int bsize = iNodeBuf[inode_number].Size;
 
         Common::FS::IOFile inflated;
-        inflated.Open(extractPaths[inode_number], Common::FS::FileAccessMode::Create);
+        inflated.Open(path_it->second, Common::FS::FileAccessMode::Create);
 
         Common::FS::IOFile pkgFile; // Open the file for each iteration to avoid conflict.
         pkgFile.Open(pkgpath, Common::FS::FileAccessMode::Read);
@@ -456,10 +468,12 @@ void PKG::ExtractFiles(const int index) {
 
             if (j < nblocks - 1) {
                 inflated.WriteRaw<u8>(decompressedData.data(), decompressedData.size());
+                extracted_bytes.fetch_add(decompressedData.size(), std::memory_order_relaxed);
             } else {
                 // This is to remove the zeros at the end of the file.
                 const u32 write_size = decompressedData.size() - (size_decompressed - bsize);
                 inflated.WriteRaw<u8>(decompressedData.data(), write_size);
+                extracted_bytes.fetch_add(write_size, std::memory_order_relaxed);
             }
         }
         pkgFile.Close();

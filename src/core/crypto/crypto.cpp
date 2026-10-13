@@ -190,11 +190,13 @@ void Crypto::PfsGenCryptoKey(std::span<const CryptoPP::byte, 32> ekpfs,
 void Crypto::decryptPFS(std::span<const CryptoPP::byte, 16> dataKey,
                         std::span<const CryptoPP::byte, 16> tweakKey, std::span<const u8> src_image,
                         std::span<CryptoPP::byte> dst_image, u64 sector) {
+    // The key schedules are the same for every sector: set them up once.
+    CryptoPP::ECB_Mode<CryptoPP::AES>::Encryption encrypt(tweakKey.data(), tweakKey.size());
+    CryptoPP::ECB_Mode<CryptoPP::AES>::Decryption decrypt(dataKey.data(), dataKey.size());
+
     // Start at 0x10000 to keep the header when decrypting the whole pfs_image.
     for (int i = 0; i < src_image.size(); i += 0x1000) {
         const u64 current_sector = sector + (i / 0x1000);
-        CryptoPP::ECB_Mode<CryptoPP::AES>::Encryption encrypt(tweakKey.data(), tweakKey.size());
-        CryptoPP::ECB_Mode<CryptoPP::AES>::Decryption decrypt(dataKey.data(), dataKey.size());
 
         std::array<CryptoPP::byte, 16> tweak{};
         std::array<CryptoPP::byte, 16> encryptedTweak;
