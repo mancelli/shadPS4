@@ -1318,6 +1318,25 @@
 																</widget>
 															</item>
 															<item>
+																<widget class="QGroupBox" name="renderResolutionGroupBox">
+																	<property name="title">
+																		<string>Render Resolution (UFC 4)</string>
+																	</property>
+																	<layout class="QVBoxLayout" name="renderResolutionLayout">
+																		<item>
+																			<widget class="QComboBox" name="renderResolutionComboBox">
+																				<property name="sizePolicy">
+																					<sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+																						<horstretch>0</horstretch>
+																						<verstretch>0</verstretch>
+																					</sizepolicy>
+																				</property>
+																			</widget>
+																		</item>
+																	</layout>
+																</widget>
+															</item>
+															<item>
 																<layout class="QHBoxLayout" name="windowSizeLayout">
 																	<item>
 																		<widget class="QGroupBox" name="windowSizeGroupBox">

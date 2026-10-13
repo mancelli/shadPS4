@@ -148,6 +148,9 @@ void SetControllerCustomColor(int r, int b, int g);
 void setFullscreenMode(std::string mode);
 std::string getPresentMode();
 void setPresentMode(std::string mode);
+// Render resolution "WxH" for games with a resolution patch (UFC 4); empty = game default.
+std::string getRenderResolution();
+void setRenderResolution(std::string resolution, bool is_game_specific = false);
 u32 getWindowWidth();
 u32 getWindowHeight();
 void setWindowWidth(u32 width);

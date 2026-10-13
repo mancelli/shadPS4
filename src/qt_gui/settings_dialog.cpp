@@ -120,6 +120,13 @@ SettingsDialog::SettingsDialog(std::shared_ptr<CompatibilityInfoClass> m_compat_
                         {tr("Log"), "Log"},           {tr("Debug"), "Debug"}};
     micMap = {{tr("None"), "None"}, {tr("Default Device"), "Default Device"}};
 
+    // Item data is the value stored in config.toml ("" = the game's own resolution).
+    ui->renderResolutionComboBox->addItem(tr("Game default (UFC 4: 1600x900)"), QString());
+    for (const char* resolution : {"1280x720", "1920x1080", "2560x1440", "3840x2160"}) {
+        ui->renderResolutionComboBox->addItem(QString::fromLatin1(resolution),
+                                              QString::fromLatin1(resolution));
+    }
+
     if (m_physical_devices.empty()) {
         // Populate cache of physical devices.
         Vulkan::Instance instance(false, false, false);
@@ -991,6 +998,7 @@ SettingsDialog::SettingsDialog(std::shared_ptr<CompatibilityInfoClass> m_compat_
         // Graphics
         ui->graphicsAdapterGroupBox->installEventFilter(this);
         ui->windowSizeGroupBox->installEventFilter(this);
+        ui->renderResolutionGroupBox->installEventFilter(this);
         ui->presentModeGroupBox->installEventFilter(this);
         ui->heightDivider->installEventFilter(this);
         ui->nullGpuCheckBox->installEventFilter(this);
@@ -1055,6 +1063,20 @@ SettingsDialog::SettingsDialog(std::shared_ptr<CompatibilityInfoClass> m_compat_
         ui->ReadbackSpeedComboBox->installEventFilter(this);
         ui->MemorySpinBox->installEventFilter(this);
         ui->FmemSpinBox->installEventFilter(this);
+        ui->SkipsCheckBox->installEventFilter(this);
+        ui->useHostMemoryFallbackCheckBox->installEventFilter(this);
+        ui->memoryCompressionComboBox->installEventFilter(this);
+        ui->app0BandwidthSpinBox->installEventFilter(this);
+        ui->app0DisableTimeStretchingCheckBox->installEventFilter(this);
+        ui->app0UnlimitedSequentialReadSpeedCheckBox->installEventFilter(this);
+
+        // Settings whose description existed or was missing without a hover handler
+        ui->cpuSettingsGroupBox->installEventFilter(this);
+        ui->displayModeGroupBox->installEventFilter(this);
+        ui->FSRGroupBox->installEventFilter(this);
+        ui->fpsLimitGroupBox->installEventFilter(this);
+        ui->dumpShadersCheckBox->installEventFilter(this);
+        ui->upnpCheckBox->installEventFilter(this);
     }
 
     SdlEventWrapper::Wrapper::wrapperActive = true;
@@ -1244,6 +1266,16 @@ void SettingsDialog::LoadValuesFromConfig() {
     std::string presentMode = toml::find_or<std::string>(data, "GPU", "presentMode", "Mailbox");
     QString translatedText_PresentMode = presentModeMap.key(QString::fromStdString(presentMode));
     ui->presentModeComboBox->setCurrentText(translatedText_PresentMode);
+
+    const QString renderResolution =
+        QString::fromStdString(toml::find_or<std::string>(data, "GPU", "renderResolution", ""));
+    int renderResolutionIndex = ui->renderResolutionComboBox->findData(renderResolution);
+    if (renderResolutionIndex < 0) {
+        // A custom value written into config.toml by hand: keep it selectable.
+        ui->renderResolutionComboBox->addItem(renderResolution, renderResolution);
+        renderResolutionIndex = ui->renderResolutionComboBox->count() - 1;
+    }
+    ui->renderResolutionComboBox->setCurrentIndex(renderResolutionIndex);
 
     ui->gameSizeCheckBox->setChecked(toml::find_or<bool>(data, "GUI", "loadGameSizeEnabled", true));
     ui->showSplashCheckBox->setChecked(toml::find_or<bool>(data, "General", "showSplash", false));
@@ -1555,7 +1587,7 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
     } else if (elementName == "label_Trophy" || elementName == "trophyKeyLineEdit") {
         text = tr("Trophy Key:\\nKey used to decrypt trophies. Must be obtained from your jailbroken console.\\nMust contain only hex characters.");
     } else if (elementName == "logTypeGroupBox") {
-        text = tr("Log Type:\\nSets whether to synchronize the output of the log window for performance. May have adverse effects on emulation.");
+        text = tr("Log Type:\\nasync: log lines are written by a background thread (recommended).\\nsync: every log line is written immediately. Keeps the last lines if the emulator crashes, but slows the game down, a lot with verbose log filters.");
     } else if (elementName == "logFilter") {
         text = tr("Log Filter:\\nFilters the log to only print specific information.\\nExamples: \"Core:Trace\" \"Lib.Pad:Debug Common.Filesystem:Error\" \"*:Critical\"\\nLevels: Trace, Debug, Info, Warning, Error, Critical - in this order, a specific level silences all levels preceding it in the list and logs every level after it.");
     #ifdef ENABLE_UPDATER
@@ -1605,9 +1637,9 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
     } else if (elementName == "heightDivider") {
         text = tr("Vblank Frequency:\\nThe frame rate at which the emulator refreshes at (60hz is the baseline, whether the game runs at 30 or 60fps). Changing this may have adverse effects, such as increasing the game speed, or breaking critical game functionality that does not expect this to change!");
     } else if (elementName == "dumpShadersCheckBox") {
-        text = tr("Enable Shaders Dumping:\\nFor the sake of technical debugging, saves the games shaders to a folder as they render.");
+        text = tr("Enable Shaders Dumping:\\nFor technical debugging, saves every shader the game uses to a folder.\\nPerformance: extra disk writes and stutter whenever a new shader appears. Leave off for playing.");
     } else if (elementName == "nullGpuCheckBox") {
-        text = tr("Enable Null GPU:\\nFor the sake of technical debugging, disables game rendering as if there were no graphics card.");
+        text = tr("Enable Null GPU:\\nFor technical debugging, disables game rendering as if there were no graphics card.\\nThe game shows nothing. Leave off for playing.");
     }
 
     // Path
@@ -1637,29 +1669,29 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
 
     // Debug
     if (elementName == "debugDump") {
-        text = tr("Enable Debug Dumping:\\nSaves the import and export symbols and file header information of the currently running PS4 program to a directory.");
+        text = tr("Enable Debug Dumping:\\nSaves the import and export symbols and file header information of the currently running PS4 program to a directory.\\nPerformance: only slows down game start. Leave off for playing.");
     } else if (elementName == "vkValidationCheckBox") {
         text = tr("Enable Vulkan Validation Layers:\\nEnables a system that validates the state of the Vulkan renderer and logs information about its internal state.\\nThis will reduce performance and likely change the behavior of emulation.\\nYou need the Vulkan SDK for this to work.");
     } else if (elementName == "vkSyncValidationCheckBox") {
         text = tr("Enable Vulkan Synchronization Validation:\\nEnables a system that validates the timing of Vulkan rendering tasks.\\nThis will reduce performance and likely change the behavior of emulation.\\nYou need the Vulkan SDK for this to work.");
     } else if (elementName == "rdocCheckBox") {
-        text = tr("Enable RenderDoc Debugging:\\nIf enabled, the emulator will provide compatibility with Renderdoc to allow capture and analysis of the currently rendered frame.");
+        text = tr("Enable RenderDoc Debugging:\\nLets RenderDoc capture and analyse the current frame.\\nPerformance: small cost even without a capture. Leave off for playing.");
     } else if (elementName == "crashDiagnosticsCheckBox") {
-        text = tr("Crash Diagnostics:\\nCreates a .yaml file with info about the Vulkan state at the time of crashing.\\nUseful for debugging 'Device lost' errors. If you have this enabled, you should enable Host AND Guest Debug Markers.\\nYou need Vulkan Validation Layers enabled and the Vulkan SDK for this to work.");
+        text = tr("Crash Diagnostics:\\nCreates a .yaml file with info about the Vulkan state at the time of crashing.\\nUseful for debugging 'Device lost' errors. If you have this enabled, you should enable Host AND Guest Debug Markers.\\nYou need Vulkan Validation Layers enabled and the Vulkan SDK for this to work.\\nPerformance: large drop (GPU work is checkpointed). Only for hunting crashes.");
     } else if (elementName == "guestMarkersCheckBox") {
-        text = tr("Guest Debug Markers:\\nInserts any debug markers the game itself has added to the command buffer.\\nIf you have this enabled, you should enable Crash Diagnostics.\\nUseful for programs like RenderDoc.");
+        text = tr("Guest Debug Markers:\\nInserts any debug markers the game itself has added to the command buffer.\\nIf you have this enabled, you should enable Crash Diagnostics.\\nUseful for programs like RenderDoc.\\nPerformance: small drop. Leave off for playing.");
     } else if (elementName == "hostMarkersCheckBox") {
-        text = tr("Host Debug Markers:\\nInserts emulator-side information like markers for specific AMDGPU commands around Vulkan commands, as well as giving resources debug names.\\nIf you have this enabled, you should enable Crash Diagnostics.\\nUseful for programs like RenderDoc.");
+        text = tr("Host Debug Markers:\\nInserts emulator-side information like markers for specific AMDGPU commands around Vulkan commands, as well as giving resources debug names.\\nIf you have this enabled, you should enable Crash Diagnostics.\\nUseful for programs like RenderDoc.\\nPerformance: small to noticeable drop. Leave off for playing.");
     } else if (elementName == "copyGPUBuffersCheckBox") {
-        text = tr("Copy GPU Buffers:\\nGets around race conditions involving GPU submits.\\nMay or may not help with PM4 type 0 crashes.");
+        text = tr("Copy GPU Buffers:\\nCopies every GPU command buffer before it runs, which avoids some race conditions.\\nMay or may not help with PM4 type 0 crashes.\\nPerformance: lower FPS in games that submit a lot of GPU work. Only turn on if a game crashes without it.");
     } else if (elementName == "collectShaderCheckBox") {
-        text = tr("Collect Shaders:\\nYou need this enabled to edit shaders with the debug menu (Ctrl + F10).");
+        text = tr("Collect Shaders:\\nYou need this enabled to edit shaders with the debug menu (Ctrl + F10).\\nPerformance: more memory use. Leave off for playing.");
     } else if (elementName == "patchShadersCheckBox") {
-        text = tr("Enable Shader Patching:\\nAutomatically enables and loads shader patches from the shader/patch folder.\\nPatches will be applied on launch without requiring manual activation via debug menu.");
+        text = tr("Enable Shader Patching:\\nAutomatically loads shader patches from the shader/patch folder on launch.\\nOnly does something if that folder contains patches for the game.");
     } else if (elementName == "separateLogFilesCheckbox") {
         text = tr("Separate Log Files:\\nWrites a separate logfile for each game.");
     } else if (elementName == "collectDebugLogsCheckBox") {
-        text = tr("Collect Debug Logs:\\nAdds frame times, performance counters and, if the game freezes, a dump of every thread to the log.\\nTurn this on when something goes wrong, play until it happens, then send the log file (Open Log Location).\\nLeave it off otherwise.");
+        text = tr("Collect Debug Logs:\\nAdds frame times, performance counters and, if the game freezes, a dump of every thread to the log.\\nTurn this on when something goes wrong, play until it happens, then send the log file (Open Log Location).\\nPerformance: small cost, bigger log files. Leave it off otherwise.");
     } else if (elementName == "enableLoggingCheckBox") {
         text = tr("Enable Logging:\\nEnables logging.\\nDo not change this if you do not know what you're doing!\\nWhen asking for help, make sure this setting is ENABLED.");
     } else if (elementName == "OpenLogLocationButton") {
@@ -1675,9 +1707,9 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
     } else if (elementName == "motionControlsCheckBox") {
         text = tr("Enable Motion Controls:\\nWhen enabled it will use the controller's motion control if supported.");
     } else if (elementName == "ReadbacksLinearCheckBox") {
-        text = tr("Enable Readback Linear Images:\\nEnables async downloading of GPU modified linear images.\\nMight fix issues in some games.");
+        text = tr("LinearImage Readbacks:\\nCopies pictures the GPU draws in linear (CPU-readable) layout back to game memory after every frame, so the game can read them on the CPU.\\nHelps games that read rendered pictures on the CPU (screenshots, photo modes, thumbnails).\\nPerformance: extra GPU-to-CPU copies every frame, lower FPS and possible stutter. Leave off unless a game shows black or outdated pictures.\\nUFC 4 does not need it: the fix for black fighter avatars works without this option.");
     } else if (elementName == "DMACheckBox") {
-        text = tr("Enable Direct Memory Access:\\nEnables arbitrary memory access from the GPU to CPU memory.");
+        text = tr("Enable Direct Memory Access:\\nLets shaders read any game memory directly, as on a real PS4.\\nNeeded by a few games that would otherwise show broken or missing graphics.\\nPerformance: shaders that use it run slower and the game may be less stable. Leave off unless a game needs it.");
     } else if (elementName == "isNeoModeCheckBox") {
         text = tr("Enable PS4 Neo Mode:\\nAdds support for PS4 Pro emulation and memory size. Currently causes instability in a large number of tested games.");
     } else if (elementName == "isDevKitCheckBox") {
@@ -1688,6 +1720,50 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
         text = tr("ShadNet Network:\\nA PSN server replacement.\\nCompatibility is very limited at the moment.\\nYou can register at https://www.shadps4.net/shadNet/register/.");
     } else if (elementName == "shadnetAccountsGroupBox") {
         text = tr("ShadNet Accounts:\\nSign in each player to ShadNet using their NPID and password.\\nOnce signed in, the player's ShadNet online ID is used in place of their local username.");
+    } else if (elementName == "renderResolutionGroupBox") {
+        text = tr("Render Resolution (UFC 4):\\nThe resolution UFC 4 renders its 3D scene at. By default the game uses 1600x900 (the base PS4 resolution) and scales it to the window.\\n1920x1080 gives a sharp picture on a 1080p screen. Higher values look sharper but need a faster GPU and more video memory; values above 1920x1080 were not tested.\\nOnly UFC 4 (CUSA14204) is supported; other games ignore this setting.\\nTakes effect the next time the game starts.");
+    } else if (elementName == "ReadbackSpeedComboBox") {
+        text = tr("Readback Speed:\\nHow the emulator copies data the GPU wrote back to game memory, so the game can read it on the CPU (for example physics or animation results calculated on the GPU).\\n\\nDisable: no readbacks. Fastest and smoothest. Games that read GPU results on the CPU may show missing objects, broken effects or freeze.\\nUnsafe: data is only copied for memory the game reads often. Faster than Low/Default, but the game can still read old data.\\nLow: data is copied when the game reads it. Correct, but each first read waits for the GPU (short stutters).\\nDefault / Fast: like Low, and memory the game reads often is copied ahead of time. Fewest glitches, most GPU-to-CPU traffic (lower FPS in heavy scenes). In this build both modes behave the same.\\n\\nStart with Disable. Choose another mode only if a game has glitches without it.");
+    } else if (elementName == "MemorySpinBox") {
+        text = tr("Extra Direct Memory (Dmem):\\nAdds memory on top of what a PS4 has.\\nSome mods and high-resolution patches need more memory than a PS4 has and crash without it.\\nUses the same amount of your PC RAM. Leave at 0 unless a mod asks for it.");
+    } else if (elementName == "FmemSpinBox") {
+        text = tr("Extra Flexible Memory (Fmem):\\nAdds flexible memory on top of what a PS4 has.\\nSome mods need it and crash without it.\\nUses the same amount of your PC RAM. Leave at 0 unless a mod asks for it.");
+    } else if (elementName == "cacheCheckBox") {
+        text = tr("Enable Shader Cache:\\nSaves compiled shaders and the Vulkan pipeline cache to disk.\\nThe first run stutters while shaders compile. Later runs load them from disk and stutter much less.\\nRecommended: on.");
+    } else if (elementName == "cacheArchiveCheckBox") {
+        text = tr("Enable Cache Archive:\\nStores the shader cache in one archive file instead of many small files.\\nTidier and easier to copy, but loading and saving the cache is a bit slower.");
+    } else if (elementName == "SkipsCheckBox") {
+        text = tr("Enable Shader Skips:\\nSkips the shaders on the built-in skip list for the running game.\\nUsed to avoid crashes or broken effects in specific games, but the skipped effects disappear.\\nHas no effect for games without a skip list.");
+    } else if (elementName == "FSRGroupBox") {
+        text = tr("FSR / RCAS:\\nFSR upscales the game picture to the window size with AMD FidelityFX Super Resolution 1. It does not change the resolution the game renders at.\\nRCAS sharpens the picture. Higher attenuation means less sharpening.\\nPerformance: small GPU cost.");
+    } else if (elementName == "fpsLimitGroupBox") {
+        text = tr("FPS Limiter:\\nLimits how many frames per second the emulator presents.\\nCan reduce heat, fan noise and frame time spikes. A limit below the game's own frame rate makes the game run slow or stutter.");
+    } else if (elementName == "useHostMemoryFallbackCheckBox") {
+        text = tr("Use Host Memory Fallback:\\nPuts GPU buffers into system RAM instead of video memory.\\nCan avoid out-of-memory crashes on graphics cards with little video memory.\\nPerformance: much lower FPS, because the GPU has to read over PCIe. Leave off unless the game crashes with \"out of device memory\".");
+    } else if (elementName == "memoryCompressionComboBox") {
+        text = tr("Memory Compression:\\nIn this build only the setting is stored. Nothing is compressed yet, so it has no effect on memory use or performance.");
+    } else if (elementName == "app0BandwidthSpinBox") {
+        text = tr("App0 Read Bandwidth:\\nLimits how fast game files are read, to imitate the PS4 hard drive (typical: 75, 100, 125 MiB/s).\\n0 = no limit: games load as fast as your drive allows.\\nOnly set a limit if a game breaks when it loads too fast. Loading screens get longer.");
+    } else if (elementName == "app0DisableTimeStretchingCheckBox") {
+        text = tr("Disable Time Stretching:\\nIn this build only the setting is stored. It has no effect yet.");
+    } else if (elementName == "app0UnlimitedSequentialReadSpeedCheckBox") {
+        text = tr("Unlimited Sequential Read Speed:\\nIn this build only the setting is stored. It has no effect yet.");
+    } else if (elementName == "HotkeysCheckBox") {
+        text = tr("Disable Hardcoded Hotkeys:\\nTurns off the built-in hotkeys (F2 trophies, F3 tip, and the Touchpad + button combos on the controller), so they cannot be pressed by accident in a game. Hotkeys you set yourself still work.");
+    } else if (elementName == "HomeHotkeysCheckBox") {
+        text = tr("PS/Home/Guide button hotkeys:\\nThe built-in controller hotkeys are Touchpad + another button. With this on, they use the PS (Home/Guide) button instead, which helps in games that use the touchpad.");
+    } else if (elementName == "enableAutoBackupCheckBox") {
+        text = tr("Enable Auto Backup:\\nMakes a copy of the save data while the game runs (Bloodborne only).\\nPerformance: short disk activity when a backup is made.");
+    } else if (elementName == "xCircleButtonSwapCheckBox") {
+        text = tr("Swap Cross and Circle:\\nSwaps the Cross and Circle buttons, for players used to the Japanese layout.");
+    } else if (elementName == "disableKeyboardBindingsCheckBox") {
+        text = tr("Disable Keyboard Bindings:\\nIgnores keyboard and mouse input for the game, so keys pressed by accident do not reach it. Controllers keep working.");
+    } else if (elementName == "separateUpdatesCheckBox") {
+        text = tr("Enable Separate Update Folder:\\nLoads game updates from a separate folder next to the game (for example CUSA00001-UPDATE) instead of requiring them to be merged into the game folder.");
+    } else if (elementName == "displayModeGroupBox") {
+        text = tr("Display Mode:\\nWindowed: a normal window.\\nFullscreen (Borderless): a window covering the screen. Switching to other programs is fast.\\nFullscreen: exclusive fullscreen. Can lower input lag a little, but switching to other programs takes longer.");
+    } else if (elementName == "upnpCheckBox") {
+        text = tr("Enable UPnP:\\nLets the emulator open ports on your router automatically for ShadNet online play. Only needed for online features.");
     }
     // clang-format on
     ui->descriptionText->setText(text.replace("\\n", "\n"));
@@ -1721,6 +1797,8 @@ void SettingsDialog::UpdateSettings() {
         screenModeMap.value(ui->displayModeComboBox->currentText()).toStdString());
     Config::setPresentMode(
         presentModeMap.value(ui->presentModeComboBox->currentText()).toStdString());
+    Config::setRenderResolution(
+        ui->renderResolutionComboBox->currentData().toString().toStdString());
     Config::setIsMotionControlsEnabled(ui->motionControlsCheckBox->isChecked());
     Config::setBackgroundControllerInput(ui->backgroundControllerCheckBox->isChecked());
     Config::setKeyboardBindingsDisabled(ui->disableKeyboardBindingsCheckBox->isChecked());

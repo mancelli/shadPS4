@@ -283,6 +283,8 @@ static ConfigEntry<u32> vblankFrequency(60);
 static ConfigEntry<bool> isFullscreen(false);
 static ConfigEntry<std::string> fullscreenMode("Windowed");
 static ConfigEntry<string> presentMode("Mailbox");
+// "WxH" render resolution patched into supported games (UFC 4); empty = game default.
+static ConfigEntry<string> renderResolution("");
 static ConfigEntry<bool> isHDRAllowed(false);
 static ConfigEntry<bool> fsrEnabled(true);
 static ConfigEntry<bool> rcasEnabled(true);
@@ -866,6 +868,10 @@ string getFullscreenMode() {
 
 std::string getPresentMode() {
     return presentMode.get();
+}
+
+std::string getRenderResolution() {
+    return renderResolution.get();
 }
 
 bool getisTrophyPopupDisabled() {
@@ -1468,6 +1474,10 @@ void setFullscreenMode(string mode) {
 
 void setPresentMode(std::string mode) {
     presentMode.base_value = mode;
+}
+
+void setRenderResolution(std::string resolution, bool is_game_specific) {
+    renderResolution.set(resolution, is_game_specific);
 }
 
 void setisTrophyPopupDisabled(bool disable) {
@@ -2106,6 +2116,7 @@ void load(const std::filesystem::path& path, bool is_game_specific) {
         directMemoryAccessEnabled.setFromToml(gpu, "directMemoryAccess", is_game_specific);
         isFullscreen.setFromToml(gpu, "Fullscreen", is_game_specific);
         fullscreenMode.setFromToml(gpu, "FullscreenMode", is_game_specific);
+        renderResolution.setFromToml(gpu, "renderResolution", is_game_specific);
         if (is_game_specific) {
             if (auto opt = toml::get_optional<std::string>(gpu, "presentMode")) {
                 presentMode.game_specific_value = *opt;
@@ -2576,6 +2587,8 @@ void save(const std::filesystem::path& path, bool is_game_specific) {
             fullscreenMode.game_specific_value.value_or(fullscreenMode.base_value);
         data["GPU"]["presentMode"] =
             presentMode.game_specific_value.value_or(presentMode.base_value);
+        data["GPU"]["renderResolution"] =
+            renderResolution.game_specific_value.value_or(renderResolution.base_value);
         data["GPU"]["allowHDR"] =
             isHDRAllowed.game_specific_value.value_or(isHDRAllowed.base_value);
         data["GPU"]["shaderSkipsEnabled"] =
@@ -2604,6 +2617,7 @@ void save(const std::filesystem::path& path, bool is_game_specific) {
         data["GPU"]["Fullscreen"] = isFullscreen.base_value;
         data["GPU"]["FullscreenMode"] = fullscreenMode.base_value;
         data["GPU"]["presentMode"] = presentMode.base_value;
+        data["GPU"]["renderResolution"] = renderResolution.base_value;
         data["GPU"]["allowHDR"] = isHDRAllowed.base_value;
         data["GPU"]["shaderSkipsEnabled"] = shaderSkipsEnabled.base_value;
     }
@@ -2889,6 +2903,7 @@ void setDefaultValues() {
     isFullscreen = false;
     fullscreenMode = "Windowed";
     presentMode = "Mailbox";
+    renderResolution = "";
     isHDRAllowed = false;
     fsrEnabled = true;
     rcasEnabled = true;

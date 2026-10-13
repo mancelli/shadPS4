@@ -695,25 +695,26 @@ static std::vector<int32_t> PatternToByte(const std::string& pattern) {
 void ApplyRenderResolution() {
     // Same bytes as the community UFC 4 "Resolution WxH" patches: the resolution setup does
     // mov eax, 900 / mov esi, 1600 (base PS4 render size); replace height and width.
+    // SHADPS4_RENDER_RES overrides the launcher setting (Settings -> Graphics).
     const char* env = std::getenv("SHADPS4_RENDER_RES");
-    if (!env || !*env || g_game_serial != "CUSA14204") {
+    const std::string resolution = env && *env ? std::string{env} : Config::getRenderResolution();
+    if (resolution.empty() || g_game_serial != "CUSA14204") {
         return;
     }
     uint32_t width = 0, height = 0;
-    if (std::sscanf(env, "%ux%u", &width, &height) != 2 || width < 64 || height < 64 ||
-        width > 3840 || height > 2160) {
-        LOG_ERROR(Loader, "SHADPS4_RENDER_RES={} is not WxH (64..3840 x 64..2160)", env);
+    if (std::sscanf(resolution.c_str(), "%ux%u", &width, &height) != 2 || width < 64 ||
+        height < 64 || width > 3840 || height > 2160) {
+        LOG_ERROR(Loader, "Render resolution {} is not WxH (64..3840 x 64..2160)", resolution);
         return;
     }
     const uintptr_t at = PatternScan("07 00 00 eb 15 b8 84 03 00 00 be 40 06 00 00 89");
     if (at == 0) {
-        LOG_ERROR(Loader, "SHADPS4_RENDER_RES: resolution setup not found in {}", g_eboot_name);
+        LOG_ERROR(Loader, "Render resolution: resolution setup not found in {}", g_eboot_name);
         return;
     }
     std::memcpy(reinterpret_cast<void*>(at + 6), &height, sizeof(height));
     std::memcpy(reinterpret_cast<void*>(at + 11), &width, sizeof(width));
-    LOG_INFO(Loader, "SHADPS4_RENDER_RES: render resolution {}x{} (patched at {:#x})", width,
-             height, at);
+    LOG_INFO(Loader, "Render resolution {}x{} (patched at {:#x})", width, height, at);
 }
 
 uintptr_t PatternScan(const std::string& signature) {
