@@ -74,7 +74,10 @@ static LONG WINAPI UnhandledExceptionLogger(EXCEPTION_POINTERS* pExp) noexcept {
     }
     const auto* record = pExp->ExceptionRecord;
     if (record->ExceptionCode == EXCEPTION_BREAKPOINT) {
-        // ASSERT/UNREACHABLE end with a breakpoint after logging their own message.
+        // ASSERT/UNREACHABLE end with a breakpoint after logging their own message. Flush it:
+        // with "group identical log lines" on, the newest line is only written by the next
+        // different line or by Stop(), so the assert message would otherwise be lost.
+        Common::Log::Stop();
         return EXCEPTION_CONTINUE_SEARCH;
     }
     void* const address = record->ExceptionAddress;
