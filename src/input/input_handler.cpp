@@ -931,12 +931,14 @@ bool UpdatePressedKeys(InputEvent event) {
         }
         return true;
     } else if (event.active) {
-        // Find the correct position for insertion to maintain order
-        auto it = std::lower_bound(pressed_keys.begin(), pressed_keys.end(), input,
-                                   [](const std::pair<InputEvent, bool>& e, InputID i) {
-                                       return std::tie(e.first.input.type, e.first.input.sdl_id) <
-                                              std::tie(i.type, i.sdl_id);
-                                   });
+        // Find the correct position for insertion to maintain order. This must use the same
+        // ordering as the axis branch above (InputID's, which includes the gamepad id): with
+        // two ordering rules the list stops being sorted as soon as two gamepads have inputs in
+        // it, the binary searches then miss existing entries and insert duplicates, and a stale
+        // duplicate keeps a trigger or button held for that player until the game restarts.
+        auto it = std::lower_bound(
+            pressed_keys.begin(), pressed_keys.end(), input,
+            [](const std::pair<InputEvent, bool>& e, InputID i) { return e.first.input < i; });
 
         // Insert only if 'value' is not already in the list
         if (it == pressed_keys.end() || it->first.input != input) {
