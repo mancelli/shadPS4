@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright 2025 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <atomic>
 #include <cstdlib>
 #include <fstream>
 #include <map>
@@ -16,6 +17,7 @@
 #include "common/config.h"
 #include "common/logging/formatter.h"
 #include "common/logging/log.h"
+#include "common/memory_patcher.h"
 #include "common/path_util.h"
 #include "common/scm_rev.h"
 #include "common/thread.h"
@@ -1223,6 +1225,33 @@ bool copyGPUCmdBuffers() {
 
 ReadbackSpeed readbackSpeed() {
     return readbackSpeedMode.get();
+}
+
+// UFC 4 reads results of its compute shaders for the fighters' heads on the CPU. Without
+// readbacks it reads stale memory and the heads are not drawn (only hair and eyes remain).
+static bool GameNeedsReadbacks() {
+    // 0 = no game loaded yet, 1 = no, 2 = yes
+    static std::atomic<u8> state{0};
+    u8 value = state.load(std::memory_order_relaxed);
+    if (value == 0) {
+        const std::string& serial = MemoryPatcher::g_game_serial;
+        if (serial.empty()) {
+            return false;
+        }
+        value = serial == "CUSA14204" || serial == "CUSA14209" ? 2 : 1;
+        state.store(value, std::memory_order_relaxed);
+    }
+    return value == 2;
+}
+
+ReadbackSpeed gpuReadbackSpeed() {
+    const ReadbackSpeed mode = readbackSpeed();
+    // Disable and Unsafe never copy GPU data back for CPU reads.
+    if ((mode == ReadbackSpeed::Disable || mode == ReadbackSpeed::Unsafe) &&
+        GameNeedsReadbacks()) {
+        return ReadbackSpeed::Low;
+    }
+    return mode;
 }
 
 void setReadbackSpeed(ReadbackSpeed mode) {

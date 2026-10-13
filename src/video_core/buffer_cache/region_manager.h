@@ -96,20 +96,21 @@ public:
         } else {
             bits.UnsetRange(start_page, end_page);
         }
+        const Config::ReadbackSpeed readback = Config::gpuReadbackSpeed();
         if constexpr (type == Type::CPU) {
             UpdateProtection<!enable, false>();
-        } else if (Config::readbackSpeed() == Config::ReadbackSpeed::Fast) {
+        } else if (readback == Config::ReadbackSpeed::Fast) {
             UpdateProtection<enable, true>();
-        } else if (Config::readbackSpeed() == Config::ReadbackSpeed::Disable) {
+        } else if (readback == Config::ReadbackSpeed::Disable) {
             UpdateProtection<!enable, false>();
-        } else if (Config::readbackSpeed() == Config::ReadbackSpeed::Unsafe) {
+        } else if (readback == Config::ReadbackSpeed::Unsafe) {
             UpdateProtection<!enable, false>();
-        } else if (Config::readbackSpeed() == Config::ReadbackSpeed::Low) {
+        } else if (readback == Config::ReadbackSpeed::Low) {
             UpdateProtection<enable, true>();
-        } else if (Config::readbackSpeed() == Config::ReadbackSpeed::Default) {
+        } else if (readback == Config::ReadbackSpeed::Default) {
             UpdateProtection<enable, true>();
         }
-        if (Config::readbackSpeed() != Config::ReadbackSpeed::Low) {
+        if (readback != Config::ReadbackSpeed::Low) {
             for (size_t page = start_page; page != end_page && !enable; ++page) {
                 ++flushes[page];
             }
@@ -139,18 +140,19 @@ public:
         RegionBits mask(bits, start_page, end_page);
 
         if constexpr (clear) {
+            const Config::ReadbackSpeed readback = Config::gpuReadbackSpeed();
             bits.UnsetRange(start_page, end_page);
             if constexpr (type == Type::CPU) {
                 UpdateProtection<true, false>();
-            } else if (Config::readbackSpeed() == Config::ReadbackSpeed::Disable) {
+            } else if (readback == Config::ReadbackSpeed::Disable) {
                 UpdateProtection<true, false>();
-            } else if (Config::readbackSpeed() == Config::ReadbackSpeed::Unsafe) {
+            } else if (readback == Config::ReadbackSpeed::Unsafe) {
                 UpdateProtection<false, false>();
-            } else if (Config::readbackSpeed() == Config::ReadbackSpeed::Fast) {
+            } else if (readback == Config::ReadbackSpeed::Fast) {
                 UpdateProtection<false, true>();
-            } else if (Config::readbackSpeed() == Config::ReadbackSpeed::Low) {
+            } else if (readback == Config::ReadbackSpeed::Low) {
                 UpdateProtection<false, true>();
-            } else if (Config::readbackSpeed() == Config::ReadbackSpeed::Default) {
+            } else if (readback == Config::ReadbackSpeed::Default) {
                 UpdateProtection<false, true>();
             }
         }

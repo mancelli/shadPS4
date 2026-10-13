@@ -194,6 +194,9 @@ bool nullGpu();
 bool copyGPUCmdBuffers();
 void setCopyGPUCmdBuffers(bool enable);
 ReadbackSpeed readbackSpeed();
+// The mode the GPU emulation uses: readbackSpeed(), except that games which cannot run without
+// readbacks get Low instead of Disable or Unsafe.
+ReadbackSpeed gpuReadbackSpeed();
 void setReadbackSpeed(ReadbackSpeed mode);
 bool setReadbackLinearImages(bool enable);
 bool getReadbackLinearImages();

@@ -387,6 +387,11 @@ void Emulator::Run(std::filesystem::path file, std::vector<std::string> args,
     if (!id.empty()) {
         MemoryPatcher::g_game_serial = id;
         Libraries::Np::NpTrophy::game_serial = id;
+        if (Config::gpuReadbackSpeed() != Config::readbackSpeed()) {
+            LOG_INFO(Config, "GPU readbackSpeed {} would hide parts of this game, using {}",
+                     magic_enum::enum_name(Config::readbackSpeed()),
+                     magic_enum::enum_name(Config::gpuReadbackSpeed()));
+        }
 
         const auto trophyDir =
             Common::FS::GetUserPath(Common::FS::PathType::MetaDataDir) / id / "TrophyFiles";
