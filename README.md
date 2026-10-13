@@ -95,6 +95,9 @@ These changes are in the [`beta`](../../tree/beta) branch. Its builds are on the
 | "No Qt platform plugin could be initialized" on some PCs | The launcher ignores Qt plugin paths left by other programs and always loads its own plugins |
 | Unclear settings | Every setting in the launcher describes what it does and what it costs in performance |
 | Render resolution only through a `.bat` file | **Settings → Graphics → Render Resolution (UFC 4)** |
+| The launcher's updater pointed to Shadlix builds | Updates come only from this fork and are checked at startup by default (the launcher asks before downloading). Channels: **Main** (releases) and **Beta** (newest `beta` build, pre-release `beta-latest`) |
+| PKG installer put DLC into the game folder | DLC is installed into the DLC folder; folder errors are shown instead of closing the launcher |
+| Crashes left no trace in the log | The reason of a crash (exception, address, module, thread) is written to the log |
 
 ## More information
 

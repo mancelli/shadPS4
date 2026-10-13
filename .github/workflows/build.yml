@@ -85,6 +85,8 @@ jobs:
   windows-qt:
     runs-on: windows-2025
     needs: get-info
+    permissions:
+      contents: write # publish the beta pre-release
     steps:
     - uses: actions/checkout@v6.0.2
       with:
@@ -139,3 +141,17 @@ jobs:
       with:
         name: shadps4-win64-qt-${{ needs.get-info.outputs.date }}-${{ needs.get-info.outputs.shorthash }}
         path: upload/
+
+    # The launcher's "Beta" update channel downloads this pre-release (tag "beta-latest", not "beta": that is the branch).
+    - name: Publish beta pre-release
+      if: github.event_name == 'push' && github.ref == 'refs/heads/beta'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        cp shadps4-win64-qt-*.zip shadPS4-beta-windows-qt-launcher.zip
+        gh release delete beta-latest --cleanup-tag --yes --repo "$GITHUB_REPOSITORY" || true
+        gh release create beta-latest shadPS4-beta-windows-qt-launcher.zip \
+          --repo "$GITHUB_REPOSITORY" --prerelease --target "$GITHUB_SHA" \
+          --title "Beta ${{ needs.get-info.outputs.date }} (${{ needs.get-info.outputs.shorthash }})" \
+          --notes "Automatic build of the beta branch at $GITHUB_SHA. Not tested in games; may contain new bugs. Changes since the last release: see the README section \"Beta (not released yet)\"."

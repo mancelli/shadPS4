@@ -106,7 +106,7 @@ SettingsDialog::SettingsDialog(std::shared_ptr<CompatibilityInfoClass> m_compat_
     ui->buttonBox->button(QDialogButtonBox::StandardButton::Close)->setFocus();
 
     // Connect signals and slots
-    channelMap = {{tr("Revert"), "Revert"}, {tr("Shadlix"), "Shadlix"}};
+    channelMap = {{tr("Main"), "Main"}, {tr("Beta"), "Beta"}};
     logTypeMap = {{tr("async"), "async"}, {tr("sync"), "sync"}};
     screenModeMap = {{tr("Fullscreen (Borderless)"), "Fullscreen (Borderless)"},
                      {tr("Windowed"), "Windowed"},
@@ -1344,14 +1344,14 @@ void SettingsDialog::LoadValuesFromConfig() {
     ui->RCASSpinBox->setValue(Config::getRcasAttenuation() / 1000.0);
 
 #ifdef ENABLE_UPDATER
-    ui->updateCheckBox->setChecked(toml::find_or<bool>(data, "General", "autoUpdate", false));
+    ui->updateCheckBox->setChecked(Config::autoUpdate());
     ui->changelogCheckBox->setChecked(
         toml::find_or<bool>(data, "General", "alwaysShowChangelog", false));
 
     QString updateChannel = QString::fromStdString(Config::getUpdateChannel());
 
-    if (updateChannel != "Full-Souls" && updateChannel != "Shadlix" && updateChannel != "PRTBB") {
-        updateChannel = "Full-Souls";
+    if (updateChannel != "Main" && updateChannel != "Beta") {
+        updateChannel = "Main";
     }
 
     ui->updateComboBox->setCurrentText(channelMap.key(updateChannel));
@@ -1592,7 +1592,7 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
         text = tr("Log Filter:\\nFilters the log to only print specific information.\\nExamples: \"Core:Trace\" \"Lib.Pad:Debug Common.Filesystem:Error\" \"*:Critical\"\\nLevels: Trace, Debug, Info, Warning, Error, Critical - in this order, a specific level silences all levels preceding it in the list and logs every level after it.");
     #ifdef ENABLE_UPDATER
     } else if (elementName == "updaterGroupBox") {
-        text = tr("Update:\\nRelease: Official versions released every month that may be very outdated, but are more reliable and tested.\\nNightly: Development versions that have all the latest features and fixes, but may contain bugs and are less stable.");
+        text = tr("Update:\\nUpdates are downloaded only from this fork (github.com/mancelli/shadPS4).\\nMain: published releases. Tested, recommended.\\nBeta: the newest build of the beta branch, with fixes that are not released yet. Not tested in games, may have new bugs.\\nWith Check for Updates at Startup on, the launcher asks before downloading anything.");
 #endif
     } else if (elementName == "GUIBackgroundImageGroupBox") {
         text = tr("Background Image:\\nControl the opacity of the game background image.");

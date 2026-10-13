@@ -18,10 +18,12 @@
 #include <QProcess>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QStandardPaths>
 #include <QString>
 #include <QStringList>
 #include <QTextBrowser>
+#include <QTimeZone>
 #include <QVBoxLayout>
 #include <common/config.h>
 #include <common/path_util.h>
@@ -39,239 +41,106 @@ CheckUpdate::CheckUpdate(const bool showMessage, QWidget* parent)
 
 CheckUpdate::~CheckUpdate() {}
 
-void CheckUpdate::CheckForUpdates(const bool showMessage) {
-    QString updateChannel = QString::fromStdString(Config::getUpdateChannel());
+// Updates come only from this fork: the latest release ("Main") or the rolling "beta"
+// pre-release that CI publishes for every push to the beta branch ("Beta").
+static const QString kUpdateRepo = QStringLiteral("mancelli/shadPS4");
+static const QString kBetaReleaseTag = QStringLiteral("beta-latest");
 
-    QUrl url;
-    if (updateChannel == "Revert") {
-        url = QUrl("https://api.github.com/repos/diegolix29/shadPS4/actions/"
-                   "runs?branch=Shadlix&status=success&per_page=4");
-    } else {
-        url = QUrl("https://api.github.com/repos/diegolix29/shadPS4/releases");
-    }
+void CheckUpdate::CheckForUpdates(const bool showMessage) {
+    const QString updateChannel = QString::fromStdString(Config::getUpdateChannel());
+
+    const QUrl url =
+        updateChannel == "Beta"
+            ? QUrl(QString("https://api.github.com/repos/%1/releases/tags/%2")
+                       .arg(kUpdateRepo, kBetaReleaseTag))
+            : QUrl(QString("https://api.github.com/repos/%1/releases/latest").arg(kUpdateRepo));
 
     QNetworkRequest request(url);
     QString githubToken = qgetenv("SHADPS4_TOKEN_REPO");
     if (!githubToken.isEmpty())
         request.setRawHeader("Authorization", "token " + githubToken.toUtf8());
-
     QNetworkReply* reply = networkManager->get(request);
 
-    connect(reply, &QNetworkReply::finished, this, [this, reply, showMessage, updateChannel]() {
-        if (reply->error() != QNetworkReply::NoError) {
-            QMessageBox::warning(this, tr("Error"),
-                                 QString(tr("Network error: %1")).arg(reply->errorString()));
+    connect(reply, &QNetworkReply::finished, this, [this, reply, showMessage]() {
+        // The automatic check at startup stays silent on errors (no internet, rate limit, ...).
+        const auto fail = [&](const QString& message) {
+            if (showMessage) {
+                QMessageBox::warning(this, tr("Error"), message);
+            }
             reply->deleteLater();
+            close();
+        };
+
+        if (reply->error() != QNetworkReply::NoError) {
+            fail(QString(tr("Network error: %1")).arg(reply->errorString()));
             return;
         }
 
-        QByteArray response = reply->readAll();
-        QJsonDocument jsonDoc(QJsonDocument::fromJson(response));
-        if (jsonDoc.isNull()) {
-            QMessageBox::warning(this, tr("Error"), tr("Failed to parse update information."));
-            reply->deleteLater();
+        const QJsonDocument jsonDoc = QJsonDocument::fromJson(reply->readAll());
+        if (jsonDoc.isNull() || !jsonDoc.isObject()) {
+            fail(tr("Failed to parse update information."));
             return;
         }
+        const QJsonObject release = jsonDoc.object();
 
         QString platformString;
 #ifdef Q_OS_WIN
-        platformString = "win64-qt";
-#elif defined(Q_OS_LINUX)
-        platformString = "linux-qt";
-#elif defined(Q_OS_MAC)
-        platformString = "macos-qt";
+        platformString = "windows-qt";
 #endif
-
-        if (updateChannel == "Revert") {
-            QJsonArray runs = jsonDoc.object()["workflow_runs"].toArray();
-            if (runs.size() <= 1) {
-                QMessageBox::warning(this, tr("Error"),
-                                     tr("Not enough successful workflow runs for Revert."));
-                reply->deleteLater();
-                return;
-            }
-
-            QVBoxLayout* layout = new QVBoxLayout(this);
-            QLabel* title = new QLabel("<h2>" + tr("Select a Revert Build") + "</h2>", this);
-            layout->addWidget(title);
-
-            QStringList revertNames = {"Revert-1", "Revert-2", "Revert-3"};
-            int count = 0;
-
-            for (int i = 1; i < runs.size() && count < 3; ++i) {
-                QJsonObject run = runs[i].toObject();
-                QString msg = run["head_commit"].toObject()["message"].toString();
-                QString sha = run["head_commit"].toObject()["id"].toString().left(7);
-
-                QPushButton* btn = new QPushButton(msg + " (" + sha + ")", this);
-
-                QString revertName = revertNames[count]; // fixed backend mapping
-                connect(btn, &QPushButton::clicked, this, [this, revertName, platformString]() {
-                    QUrl releasesUrl("https://api.github.com/repos/diegolix29/shadPS4/releases");
-                    QNetworkRequest releasesRequest(releasesUrl);
-
-                    QString githubToken = qgetenv("SHADPS4_TOKEN_REPO");
-                    if (!githubToken.isEmpty())
-                        releasesRequest.setRawHeader("Authorization",
-                                                     "token " + githubToken.toUtf8());
-
-                    QNetworkReply* releasesReply = networkManager->get(releasesRequest);
-                    connect(
-                        releasesReply, &QNetworkReply::finished, this,
-                        [this, releasesReply, revertName, platformString]() {
-                            if (releasesReply->error() != QNetworkReply::NoError) {
-                                QMessageBox::warning(
-                                    nullptr, tr("Error"),
-                                    tr("Network error: %1").arg(releasesReply->errorString()));
-                                releasesReply->deleteLater();
-                                return;
-                            }
-
-                            QJsonDocument releasesDoc =
-                                QJsonDocument::fromJson(releasesReply->readAll());
-                            QJsonArray releases = releasesDoc.array();
-                            QString downloadUrl;
-
-                            for (const QJsonValue& releaseVal : releases) {
-                                QJsonObject release = releaseVal.toObject();
-                                QString releaseTitle = release["name"].toString();
-                                if (releaseTitle.isEmpty())
-                                    releaseTitle = release["tag_name"].toString();
-
-                                if (!releaseTitle.startsWith(revertName))
-                                    continue;
-
-                                QJsonArray assets = release["assets"].toArray();
-                                for (const QJsonValue& assetVal : assets) {
-                                    QJsonObject asset = assetVal.toObject();
-                                    QString name = asset["name"].toString();
-                                    if (name.contains(platformString)) {
-                                        downloadUrl = asset["browser_download_url"].toString();
-                                        break;
-                                    }
-                                }
-                                if (!downloadUrl.isEmpty())
-                                    break;
-                            }
-
-                            if (downloadUrl.isEmpty()) {
-                                QMessageBox::warning(
-                                    nullptr, tr("Error"),
-                                    tr("No Qt asset found for this Revert release and platform."));
-                                releasesReply->deleteLater();
-                                return;
-                            }
-
-                            QNetworkRequest downloadRequest{QUrl(downloadUrl)};
-                            QString githubToken = qgetenv("SHADPS4_TOKEN_REPO");
-                            if (!githubToken.isEmpty())
-                                downloadRequest.setRawHeader("Authorization",
-                                                             "token " + githubToken.toUtf8());
-
-                            QNetworkReply* downloadReply = networkManager->get(downloadRequest);
-                            connect(downloadReply, &QNetworkReply::finished, this,
-                                    [this, downloadReply]() {
-                                        if (downloadReply->error() != QNetworkReply::NoError) {
-                                            QMessageBox::warning(
-                                                nullptr, tr("Error"),
-                                                tr("Network error: %1")
-                                                    .arg(downloadReply->errorString()));
-                                            downloadReply->deleteLater();
-                                            return;
-                                        }
-                                        DownloadUpdate(downloadReply->url().toString());
-                                        downloadReply->deleteLater();
-                                    });
-
-                            releasesReply->deleteLater();
-                        });
-                });
-
-                layout->addWidget(btn);
-                ++count;
-            }
-
-            setLayout(layout);
-            reply->deleteLater();
+        if (platformString.isEmpty()) {
+            fail(tr("Updates are only built for Windows."));
             return;
         }
 
-        QJsonArray jsonArray = jsonDoc.array();
         QString downloadUrl;
-        QString latestVersion;
-        QString latestRev;
-        QString latestDate;
-        QJsonObject jsonObj;
-
-        QJsonObject newestShadlix;
-        QDateTime newestDate;
-
-        for (const QJsonValue& value : jsonArray) {
-            QJsonObject obj = value.toObject();
-            QString title = obj["name"].toString();
-            if (title.startsWith("Shadlix")) {
-                QDateTime pubDate =
-                    QDateTime::fromString(obj["published_at"].toString(), Qt::ISODate);
-                if (!newestDate.isValid() || pubDate > newestDate) {
-                    newestDate = pubDate;
-                    newestShadlix = obj;
-                }
-            }
-        }
-
-        if (newestShadlix.isEmpty()) {
-            QMessageBox::warning(this, tr("Error"), tr("No Shadlix release found."));
-            reply->deleteLater();
-            return;
-        }
-
-        jsonObj = newestShadlix;
-        latestVersion = jsonObj["tag_name"].toString();
-
-        if (latestVersion.isEmpty()) {
-            QMessageBox::warning(this, tr("Error"), tr("No releases found for update channel:"));
-            reply->deleteLater();
-            return;
-        }
-
-        latestRev = latestVersion.right(40).left(7);
-        latestDate = jsonObj["published_at"].toString();
-
-        QJsonArray assets = jsonObj["assets"].toArray();
-        bool found = false;
-        for (const QJsonValue& assetValue : assets) {
-            QJsonObject assetObj = assetValue.toObject();
-            if (assetObj["name"].toString().contains(platformString)) {
+        for (const QJsonValue& assetValue : release["assets"].toArray()) {
+            const QJsonObject assetObj = assetValue.toObject();
+            const QString name = assetObj["name"].toString();
+            if (name.contains(platformString) && name.endsWith(".zip")) {
                 downloadUrl = assetObj["browser_download_url"].toString();
-                found = true;
                 break;
             }
         }
-
-        if (!found) {
-            QMessageBox::warning(this, tr("Error"),
-                                 tr("No download URL found for the specified asset."));
-            reply->deleteLater();
+        if (downloadUrl.isEmpty()) {
+            fail(tr("No download URL found for the specified asset."));
             return;
         }
 
-        QString currentRev = QString::fromStdString(Common::g_scm_rev).left(7);
-        QString currentDate = Common::g_scm_date;
+        // Releases are created from a commit, so target_commitish is the commit the build was
+        // made from. If a release was created from a branch name instead, fall back to dates.
+        const QString target = release["target_commitish"].toString();
+        static const QRegularExpression sha_re("^[0-9a-f]{40}$");
+        const bool target_is_sha = sha_re.match(target).hasMatch();
 
-        QDateTime dateTime = QDateTime::fromString(latestDate, Qt::ISODate);
-        latestDate = dateTime.isValid() ? dateTime.toString("yyyy-MM-dd HH:mm:ss") : "Unknown date";
+        const QString currentRev = QString::fromStdString(Common::g_scm_rev).left(7);
+        const QString currentDate = Common::g_scm_date;
+        const QString latestRev = target_is_sha ? target.left(7) : release["tag_name"].toString();
+        const QDateTime published =
+            QDateTime::fromString(release["published_at"].toString(), Qt::ISODate);
+        const QString latestDate =
+            published.isValid() ? published.toString("yyyy-MM-dd HH:mm:ss") : tr("Unknown date");
 
-        if (latestRev == currentRev) {
+        bool upToDate;
+        if (target_is_sha) {
+            upToDate = latestRev == currentRev;
+        } else {
+            // BUILD_DATE is "yyyy-MM-dd HH:mm:ss", taken on the CI runner (UTC).
+            QDateTime built = QDateTime::fromString(currentDate, "yyyy-MM-dd HH:mm:ss");
+            built.setTimeZone(QTimeZone::UTC);
+            upToDate = built.isValid() && published.isValid() && published <= built;
+        }
+
+        if (upToDate) {
             if (showMessage) {
                 QMessageBox::information(this, tr("Auto Updater"),
                                          tr("Your version is already up to date!"));
             }
+            reply->deleteLater();
             close();
             return;
-        } else {
-            setupUI(downloadUrl, latestDate, latestRev, currentDate, currentRev);
         }
 
+        setupUI(downloadUrl, latestDate, latestRev, currentDate, currentRev);
         reply->deleteLater();
     });
 }
@@ -295,24 +164,22 @@ void CheckUpdate::setupUI(const QString& downloadUrl, const QString& latestDate,
 
     QString updateChannel = QString::fromStdString(Config::getUpdateChannel());
 
-    QString updateText =
-        QString("<p><b>" + tr("Update Channel") + ": </b>" + updateChannel +
-                "<br>"
-                "<table><tr>"
-                "<td><b>" +
-                tr("Current Version") +
-                ":</b></td>"
-                "<td>%1</td>"
-                "<td>(%2)</td>"
-                "</tr><tr>"
-                "<td><b>" +
-                tr("Latest Version") +
-                ":</b></td>"
-                "<td>%3</td>"
-                "<td>(%4)</td>"
-                "</tr></table></p>")
-            .arg(updateChannel == "Nightly" ? currentRev.left(7) : currentRev.left(8), currentDate,
-                 updateChannel == "Nightly" ? latestRev.left(7) : latestRev.left(8), latestDate);
+    QString updateText = QString("<p><b>" + tr("Update Channel") + ": </b>" + updateChannel +
+                                 "<br>"
+                                 "<table><tr>"
+                                 "<td><b>" +
+                                 tr("Current Version") +
+                                 ":</b></td>"
+                                 "<td>%1</td>"
+                                 "<td>(%2)</td>"
+                                 "</tr><tr>"
+                                 "<td><b>" +
+                                 tr("Latest Version") +
+                                 ":</b></td>"
+                                 "<td>%3</td>"
+                                 "<td>(%4)</td>"
+                                 "</tr></table></p>")
+                             .arg(currentRev.left(7), currentDate, latestRev, latestDate);
 
     QLabel* updateLabel = new QLabel(updateText, this);
     layout->addWidget(updateLabel);
@@ -404,9 +271,8 @@ void CheckUpdate::setupUI(const QString& downloadUrl, const QString& latestDate,
 void CheckUpdate::requestChangelog(const QString& previousSha, const QString& latestSha,
                                    const QString& downloadUrl, const QString& latestDate,
                                    const QString& currentDate) {
-    QString compareUrlString =
-        QString("https://api.github.com/repos/diegolix29/shadPS4/compare/%1...%2")
-            .arg(previousSha, latestSha);
+    QString compareUrlString = QString("https://api.github.com/repos/%1/compare/%2...%3")
+                                   .arg(kUpdateRepo, previousSha, latestSha);
 
     QUrl compareUrl(compareUrlString);
     QNetworkRequest compareRequest(compareUrl);
@@ -582,9 +448,7 @@ void CheckUpdate::Install() {
         "Remove-Item -Recurse -Force '%2'\n"
         "Start-Process -FilePath '%3\\shadps4.exe' "
         "-WorkingDirectory ([WildcardPattern]::Escape('%3'))\n");
-    arguments << "-ExecutionPolicy"
-              << "Bypass"
-              << "-File" << scriptFileName;
+    arguments << "-ExecutionPolicy" << "Bypass" << "-File" << scriptFileName;
     processCommand = "powershell.exe";
 
 #elif defined(Q_OS_LINUX)

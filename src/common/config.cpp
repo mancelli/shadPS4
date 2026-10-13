@@ -198,7 +198,7 @@ static ConfigEntry<std::array<std::string, 4>> shadNetNpids({"", "", "", ""});
 static ConfigEntry<std::array<std::string, 4>> shadNetPasswords({"", "", "", ""});
 static std::string chooseHomeTab = "General";
 static ConfigEntry<bool> isShowSplash(false);
-static bool isAutoUpdate = false;
+static bool isAutoUpdate = true;
 static ConfigEntry<bool> pauseOnUnfocus(false);
 static ConfigEntry<bool> showWelcomeDialog(true);
 static ConfigEntry<bool> isDisableHardcodedHotkeys(false);
@@ -375,7 +375,7 @@ static int iconBgOpacity = 150;
 static ConfigEntry<bool> enableAutoBackup(false);
 static ConfigEntry<bool> showLabelsUnderIcons(true);
 static ConfigEntry<bool> enableColorFilter(true);
-static std::string updateChannel;
+static std::string updateChannel = "Main";
 static ConfigEntry<int> volumeSlider(100);
 static ConfigEntry<bool> muteEnabled(false);
 static ConfigEntry<u32> fpsLimit(60);
@@ -1972,29 +1972,19 @@ void load(const std::filesystem::path& path, bool is_game_specific) {
         signaling_info.setFromToml(general, "signalingInfo", false);
         enable_upnp.setFromToml(general, "enableUPnP", false);
 
-        if (!Common::g_is_release) {
-            updateChannel = toml::find_or<std::string>(general, "updateChannel", "Shadlix");
-        }
-        if (updateChannel == "Release") {
-            updateChannel = "Shadlix";
-        }
-        if (updateChannel == "Full-Souls") {
-            updateChannel = "Shadlix";
-        }
-        if (updateChannel == "Nightly") {
-            updateChannel = "Shadlix";
-        }
-        if (updateChannel == "mainBB") {
-            updateChannel = "Shadlix";
-        }
-        if (updateChannel == "PartBB") {
-            updateChannel = "Shadlix";
-        }
-        if (updateChannel == "Revert") {
-            updateChannel = "Shadlix";
+        // Updates come only from this fork: "Main" (releases) or "Beta" (beta branch builds).
+        // Configs from Shadlix name its channels (Shadlix, Revert, ...), which would update to
+        // Shadlix builds: move them to Main once and turn automatic updates on, the new default.
+        if (!is_game_specific) {
+            updateChannel = toml::find_or<std::string>(general, "updateChannel", "Main");
+            if (updateChannel != "Main" && updateChannel != "Beta") {
+                updateChannel = "Main";
+                isAutoUpdate = true;
+            } else {
+                isAutoUpdate = toml::find_or<bool>(general, "autoUpdate", true);
+            }
         }
         isShowSplash.setFromToml(general, "showSplash", is_game_specific);
-        isAutoUpdate = toml::find_or<bool>(general, "autoUpdate", false);
         pauseOnUnfocus.setFromToml(general, "pauseOnUnfocus", is_game_specific);
         showWelcomeDialog.setFromToml(general, "showWelcomeDialog", false);
 
@@ -2883,7 +2873,7 @@ void setDefaultValues() {
     isShaderDebug = false;
     collectDebugLogsEnabled = false;
     isShowSplash = false;
-    isAutoUpdate = false;
+    isAutoUpdate = true;
     pauseOnUnfocus = false;
     isAlwaysShowChangelog = false;
     windowWidth = 1280;

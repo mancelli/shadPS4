@@ -451,12 +451,12 @@
 																				</property>
 																				<item>
 																					<property name="text">
-																						<string>Revert</string>
+																						<string>Main</string>
 																					</property>
 																				</item>
 																				<item>
 																					<property name="text">
-																						<string>Shadlix</string>
+																						<string>Beta</string>
 																					</property>
 																				</item>
 																			</widget>
