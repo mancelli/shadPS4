@@ -698,7 +698,8 @@ void ApplyRenderResolution() {
     // SHADPS4_RENDER_RES overrides the launcher setting (Settings -> Graphics).
     const char* env = std::getenv("SHADPS4_RENDER_RES");
     const std::string resolution = env && *env ? std::string{env} : Config::getRenderResolution();
-    if (resolution.empty() || g_game_serial != "CUSA14204") {
+    // UFC 4: CUSA14204 (US) and CUSA14209 (EU).
+    if (resolution.empty() || (g_game_serial != "CUSA14204" && g_game_serial != "CUSA14209")) {
         return;
     }
     uint32_t width = 0, height = 0;
