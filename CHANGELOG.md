@@ -12,6 +12,7 @@ Each version: English first, then Russian. The text of a version is also its rel
 - Fighter shadows stay under the fighters (UFC 3 and UFC 4), the floor is lit again on Radeon iGPUs
 - Faster start: the intro video is skipped (Settings → General → Skip Intro Video)
 - FPS Limiter sets the real frame rate in UFC (it gave half of it)
+- A new install starts with recommended settings: frame rate = monitor refresh rate, shaders kept on disk; an update keeps your settings
 - Render Resolution for UFC 4 is in the launcher (Settings → Graphics), also for the EU release
 - UFC 4 fighters always have heads, whatever Readback Speed is set to
 - Two controllers: buttons no longer get stuck
@@ -26,6 +27,7 @@ Each version: English first, then Russian. The text of a version is also its rel
 - Тени бойцов под бойцами (UFC 3 и UFC 4), на встроенной графике Radeon снова освещён пол
 - Быстрый запуск: интро-ролик пропускается (Settings → General → Skip Intro Video)
 - FPS Limiter задаёт настоящую частоту кадров в UFC (раньше давал половину)
+- Новая установка сразу с рекомендуемыми настройками: частота кадров = частота монитора, шейдеры сохраняются на диск; при обновлении ваши настройки остаются
 - Render Resolution для UFC 4 есть в лаунчере (Settings → Graphics), и для европейской версии тоже
 - У бойцов UFC 4 всегда есть голова, при любом Readback Speed
 - Два геймпада: кнопки больше не залипают

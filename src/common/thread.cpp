@@ -371,6 +371,25 @@ void AccurateTimer::End() {
         target_interval - std::chrono::duration_cast<std::chrono::nanoseconds>(now - start_time);
 }
 
+u32 GetPrimaryDisplayRefreshRate() {
+#ifdef _WIN32
+    DEVMODEW mode{};
+    mode.dmSize = sizeof(mode);
+    if (!EnumDisplaySettingsW(nullptr, ENUM_CURRENT_SETTINGS, &mode) ||
+        mode.dmDisplayFrequency <= 1) {
+        return 0;
+    }
+    u32 hz = mode.dmDisplayFrequency;
+    // Windows reports 59.94, 74.97, 119.88, 143.86 Hz modes as 59, 74, 119, 143.
+    if (hz % 5 == 4) {
+        ++hz;
+    }
+    return hz;
+#else
+    return 0;
+#endif
+}
+
 std::string GetCurrentThreadName() {
     using namespace Libraries::Kernel;
     if (g_curthread && !g_curthread->name.empty()) {

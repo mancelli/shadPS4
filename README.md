@@ -40,7 +40,8 @@ Other versions (for example 1.00) are not tested.
 
 1. Download `shadPS4-ufc4-intel-arc-windows-qt-launcher.zip` from [Releases](../../releases).
    The newest fixes are in the **Beta** pre-release (it can have new bugs).
-2. Unpack **the whole zip** into a new folder and run `shadPS4.exe`. All fixes are on by default.
+2. Unpack **the whole zip** into a new folder and run `shadPS4.exe`. All fixes are on by default, and a new
+   install starts with recommended settings.
 3. Add your games folder in the launcher and start the game. The first start builds shaders and stutters once.
 
 Useful settings:
@@ -93,7 +94,8 @@ Useful settings:
 
 1. Скачайте `shadPS4-ufc4-intel-arc-windows-qt-launcher.zip` в [Releases](../../releases).
    Самые новые исправления — в пре-релизе **Beta** (в нём могут быть новые баги).
-2. Распакуйте **весь архив** в новую папку и запустите `shadPS4.exe`. Все исправления включены сразу.
+2. Распакуйте **весь архив** в новую папку и запустите `shadPS4.exe`. Все исправления включены сразу, а новая
+   установка начинается с рекомендуемых настроек.
 3. Добавьте в лаунчере папку с играми и запустите игру. Первый запуск собирает шейдеры, поэтому один раз будут
    подтормаживания.
 

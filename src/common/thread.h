@@ -78,4 +78,7 @@ public:
 
 std::string GetCurrentThreadName();
 
+/// Refresh rate of the primary display in Hz (rounded: 59.94 Hz -> 60), 0 if unknown.
+u32 GetPrimaryDisplayRefreshRate();
+
 } // namespace Common

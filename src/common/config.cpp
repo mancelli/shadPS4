@@ -1953,11 +1953,26 @@ void setXCircleButtonSwap(bool swap) {
     xCircleButtonSwap.set(swap, is_game_specific_context);
 }
 
+// Settings recommended for UFC 3 / UFC 4, written into a new config.toml (first start) and used by
+// "Restore Defaults". An existing config, e.g. after an update, keeps the player's values.
+static void ApplyRecommendedSettings() {
+    // Shaders are kept on disk, so they are not compiled again on every start.
+    pipelineCacheEnable.base_value = true;
+    pipelineCacheArchive.base_value = false;
+    // UFC 4 draws the fighters' heads from data the CPU reads back from the GPU.
+    readbackSpeedMode.base_value = ReadbackSpeed::Low;
+    // Frame rate = monitor refresh rate (the FPS limiter counts the frames the player sees).
+    const u32 refresh = Common::GetPrimaryDisplayRefreshRate();
+    fpsLimiterEnabled.base_value = true;
+    fpsLimit.base_value = refresh >= 30 ? (refresh > 240 ? 240u : refresh) : 60u;
+}
+
 void load(const std::filesystem::path& path, bool is_game_specific) {
     // If the configuration file does not exist, create it and return, unless it is game specific
     std::error_code error;
     if (!std::filesystem::exists(path, error)) {
         if (!is_game_specific) {
+            ApplyRecommendedSettings();
             save(path);
         }
         return;
@@ -2987,6 +3002,8 @@ void setDefaultValues() {
     iconBgOpacity = 150;
     enableColorFilter = true;
     launcher_boot = false;
+
+    ApplyRecommendedSettings();
 }
 
 constexpr std::string_view GetDefaultGlobalConfig() {
