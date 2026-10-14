@@ -200,6 +200,8 @@ static ConfigEntry<std::array<std::string, 4>> shadNetNpids({"", "", "", ""});
 static ConfigEntry<std::array<std::string, 4>> shadNetPasswords({"", "", "", ""});
 static std::string chooseHomeTab = "General";
 static ConfigEntry<bool> isShowSplash(false);
+// UFC 3 / UFC 4 (EA) boot intro movie is reported as missing, so the game goes to its menus.
+static ConfigEntry<bool> skipIntroVideoEnabled(true);
 static bool isAutoUpdate = true;
 static ConfigEntry<bool> pauseOnUnfocus(false);
 static ConfigEntry<bool> showWelcomeDialog(true);
@@ -1171,6 +1173,10 @@ bool showSplash() {
     return isShowSplash.get();
 }
 
+bool skipIntroVideo() {
+    return skipIntroVideoEnabled.get();
+}
+
 bool autoUpdate() {
     return isAutoUpdate;
 }
@@ -1435,6 +1441,10 @@ void SetSkippedShaderHashes(const std::string& game_id) {
 
 void setShowSplash(bool enable) {
     isShowSplash.base_value = enable;
+}
+
+void setSkipIntroVideo(bool enable) {
+    skipIntroVideoEnabled.base_value = enable;
 }
 
 void setAutoUpdate(bool enable) {
@@ -2014,6 +2024,7 @@ void load(const std::filesystem::path& path, bool is_game_specific) {
             }
         }
         isShowSplash.setFromToml(general, "showSplash", is_game_specific);
+        skipIntroVideoEnabled.setFromToml(general, "skipIntroVideo", is_game_specific);
         pauseOnUnfocus.setFromToml(general, "pauseOnUnfocus", is_game_specific);
         showWelcomeDialog.setFromToml(general, "showWelcomeDialog", false);
 
@@ -2499,6 +2510,7 @@ void save(const std::filesystem::path& path, bool is_game_specific) {
     data["General"]["updateChannel"] = updateChannel;
     data["General"]["chooseHomeTab"] = chooseHomeTab;
     data["General"]["showSplash"] = isShowSplash.base_value;
+    data["General"]["skipIntroVideo"] = skipIntroVideoEnabled.base_value;
     data["General"]["autoUpdate"] = isAutoUpdate;
     data["General"]["pauseOnUnfocus"] = pauseOnUnfocus.base_value;
     data["General"]["showWelcomeDialog"] = showWelcomeDialog.base_value;
@@ -2878,6 +2890,7 @@ void setDefaultValues() {
     enable_upnp = true;
     chooseHomeTab = "General";
     isShowSplash = false;
+    skipIntroVideoEnabled = true;
     isSideTrophy = "right";
     compatibilityData = false;
 
@@ -2902,6 +2915,7 @@ void setDefaultValues() {
     isShaderDebug = false;
     collectDebugLogsEnabled = false;
     isShowSplash = false;
+    skipIntroVideoEnabled = true;
     isAutoUpdate = true;
     pauseOnUnfocus = false;
     isAlwaysShowChangelog = false;

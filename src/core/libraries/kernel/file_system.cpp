@@ -6,6 +6,7 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include "common/assert.h"
+#include "common/config.h"
 #include "common/error.h"
 #include "common/logging/log.h"
 #include "common/scope_exit.h"
@@ -78,9 +79,21 @@ static std::map<std::string, FactoryDevice> available_device = {
 
 namespace Libraries::Kernel {
 
+// UFC 3 and UFC 4 play their boot intro from samplegame/data/common/movie/bootflow/ (any
+// region or version); when the file is missing they go straight to the menus.
+static bool IsSkippedIntro(std::string_view path) {
+    return Config::skipIntroVideo() &&
+           path.find("/samplegame/data/common/movie/bootflow/") != std::string_view::npos;
+}
+
 s32 PS4_SYSV_ABI open(const char* raw_path, s32 flags, u16 mode) {
     LOG_INFO(Kernel_Fs, "path = {} flags = {:#x} mode = {:#o}", raw_path, flags, mode);
     Input::NotifyGameFileOpen(raw_path);
+    if (IsSkippedIntro(raw_path)) {
+        *__Error() = POSIX_ENOENT;
+        LOG_INFO(Kernel_Fs, "Skipping intro movie {} (Skip Intro Video)", raw_path);
+        return -1;
+    }
 
     auto* h = Common::Singleton<Core::FileSys::HandleTable>::Instance();
     auto* mnt = Common::Singleton<Core::FileSys::MntPoints>::Instance();
@@ -690,6 +703,10 @@ s32 PS4_SYSV_ABI posix_access(const char* path, s32 mode) {
 
 s32 PS4_SYSV_ABI posix_stat(const char* path, OrbisKernelStat* sb) {
     LOG_DEBUG(Kernel_Fs, "(PARTIAL) path = {}", path);
+    if (IsSkippedIntro(path)) {
+        *__Error() = POSIX_ENOENT;
+        return -1;
+    }
     if (strlen(path) > 255) {
         *__Error() = POSIX_ENAMETOOLONG;
         return -1;

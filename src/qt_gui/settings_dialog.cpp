@@ -951,6 +951,7 @@ SettingsDialog::SettingsDialog(std::shared_ptr<CompatibilityInfoClass> m_compat_
         ui->consoleLanguageGroupBox->installEventFilter(this);
         ui->emulatorLanguageGroupBox->installEventFilter(this);
         ui->showSplashCheckBox->installEventFilter(this);
+        ui->skipIntroVideoCheckBox->installEventFilter(this);
         ui->discordRPCCheckbox->installEventFilter(this);
         ui->gameVolumeGroup->installEventFilter(this);
         ui->separateUpdatesCheckBox->installEventFilter(this);
@@ -1279,6 +1280,8 @@ void SettingsDialog::LoadValuesFromConfig() {
 
     ui->gameSizeCheckBox->setChecked(toml::find_or<bool>(data, "GUI", "loadGameSizeEnabled", true));
     ui->showSplashCheckBox->setChecked(toml::find_or<bool>(data, "General", "showSplash", false));
+    ui->skipIntroVideoCheckBox->setChecked(
+        toml::find_or<bool>(data, "General", "skipIntroVideo", true));
     QString translatedText_logType = logTypeMap.key(
         QString::fromStdString(toml::find_or<std::string>(data, "General", "logType", "sync")));
     if (!translatedText_logType.isEmpty()) {
@@ -1577,6 +1580,8 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
         text = tr("Emulator Language:\nSets the language of the emulator's user interface.");
     } else if (elementName == "cpuSettingsGroupBox") {
         text = tr("CPU Configuration:\nConfigure CPU core usage for better performance or compatibility.\n\nAll Cores: Use all available CPU cores (default).\nEfficient Cores: Use only efficient/power-saving CPU cores.\nCustom Cores: Manually specify which CPU cores to use (comma-separated numbers).\n\nNote: Changes require emulator restart to take effect.");
+    } else if (elementName == "skipIntroVideoCheckBox") {
+        text = tr("Skip Intro Video (UFC 3 / UFC 4):\nStarts the game without the EA SPORTS UFC intro movie and goes straight to the menus (saves about 10 seconds). Turn it off to see the intro.");
     } else if (elementName == "showSplashCheckBox") {
         text = tr("Show Splash Screen:\nShows the game's splash screen (a special image) while the game is starting.");
     } else if (elementName == "discordRPCCheckbox") {
@@ -1934,6 +1939,7 @@ void SettingsDialog::UpdateSettings() {
     Config::setExtraFmemInMbytes(ui->FmemSpinBox->value());
     Config::setLoadGameSizeEnabled(ui->gameSizeCheckBox->isChecked());
     Config::setShowSplash(ui->showSplashCheckBox->isChecked());
+    Config::setSkipIntroVideo(ui->skipIntroVideoCheckBox->isChecked());
     Config::setDebugDump(ui->debugDump->isChecked());
     Config::setSeparateLogFilesEnabled(ui->separateLogFilesCheckbox->isChecked());
     Config::setCollectDebugLogs(ui->collectDebugLogsCheckBox->isChecked());

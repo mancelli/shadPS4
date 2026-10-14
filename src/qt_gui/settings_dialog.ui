@@ -151,6 +151,13 @@
 																		</widget>
 																	</item>
 																	<item>
+																		<widget class="QCheckBox" name="skipIntroVideoCheckBox">
+																			<property name="text">
+																				<string>Skip Intro Video (UFC 3 / UFC 4)</string>
+																			</property>
+																		</widget>
+																	</item>
+																	<item>
 																		<widget class="QCheckBox" name="discordRPCCheckbox">
 																			<property name="text">
 																				<string>Enable Discord Rich Presence</string>

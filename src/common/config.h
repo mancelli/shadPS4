@@ -187,6 +187,8 @@ bool debugDump();
 bool collectShadersForDebug();
 bool collectDebugLogs();
 bool showSplash();
+// Skip the boot intro movie of UFC 3 / UFC 4 (on by default).
+bool skipIntroVideo();
 bool autoUpdate();
 bool alwaysShowChangelog();
 std::string sideTrophy();
@@ -223,6 +225,7 @@ void setDebugDump(bool enable);
 void setCollectShaderForDebug(bool enable);
 void setCollectDebugLogs(bool enable);
 void setShowSplash(bool enable);
+void setSkipIntroVideo(bool enable);
 void setAutoUpdate(bool enable);
 void setAlwaysShowChangelog(bool enable);
 void setSideTrophy(std::string side);
