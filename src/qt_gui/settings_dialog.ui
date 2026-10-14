@@ -1327,7 +1327,7 @@
 															<item>
 																<widget class="QGroupBox" name="renderResolutionGroupBox">
 																	<property name="title">
-																		<string>Render Resolution (UFC 4)</string>
+																		<string>Render Resolution (UFC 3 / UFC 4)</string>
 																	</property>
 																	<layout class="QVBoxLayout" name="renderResolutionLayout">
 																		<item>

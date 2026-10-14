@@ -121,7 +121,7 @@ SettingsDialog::SettingsDialog(std::shared_ptr<CompatibilityInfoClass> m_compat_
     micMap = {{tr("None"), "None"}, {tr("Default Device"), "Default Device"}};
 
     // Item data is the value stored in config.toml ("" = the game's own resolution).
-    ui->renderResolutionComboBox->addItem(tr("Game default (UFC 4: 1600x900)"), QString());
+    ui->renderResolutionComboBox->addItem(tr("Game default (1600x900)"), QString());
     for (const char* resolution : {"1280x720", "1920x1080", "2560x1440", "3840x2160"}) {
         ui->renderResolutionComboBox->addItem(QString::fromLatin1(resolution),
                                               QString::fromLatin1(resolution));
@@ -1726,7 +1726,7 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
     } else if (elementName == "shadnetAccountsGroupBox") {
         text = tr("ShadNet Accounts:\\nSign in each player to ShadNet using their NPID and password.\\nOnce signed in, the player's ShadNet online ID is used in place of their local username.");
     } else if (elementName == "renderResolutionGroupBox") {
-        text = tr("Render Resolution (UFC 4):\\nThe resolution UFC 4 renders its 3D scene at. By default the game uses 1600x900 (the base PS4 resolution) and scales it to the window.\\n1920x1080 gives a sharp picture on a 1080p screen. Higher values look sharper but need a faster GPU and more video memory; values above 1920x1080 were not tested.\\nOnly UFC 4 (CUSA14204) is supported; other games ignore this setting.\\nTakes effect the next time the game starts.");
+        text = tr("Render Resolution (UFC 3 / UFC 4):\\nThe resolution UFC 3 and UFC 4 render their 3D scene at. By default the games use 1600x900 (the base PS4 resolution) and scale it to the window.\\n1920x1080 gives a sharp picture on a 1080p screen. Higher values look sharper but need a faster GPU and more video memory; values above 1920x1080 were not tested.\\nSupported: UFC 4 (CUSA14204, CUSA14209) and UFC 3 (CUSA06534); other games ignore this setting.\\nTakes effect the next time the game starts.");
     } else if (elementName == "ReadbackSpeedComboBox") {
         text = tr("Readback Speed:\\nWhether the emulator copies data the GPU wrote back to game memory when the game reads it on the CPU (for example physics, animation or skinning results calculated on the GPU).\\n\\nDisable / Unsafe: no readbacks (in this build both modes behave the same). Fastest. Games that read GPU results on the CPU may show missing objects, broken effects or freeze.\\nLow / Default / Fast: the data is copied when the game reads it (in this build all three behave the same). Correct, but each such read waits for the GPU (short stutters in games that read a lot).\\n\\nUFC 4 needs readbacks: without them the fighters' heads are invisible. For UFC 4, Disable and Unsafe therefore run as Low.\\nOther games: start with Disable and choose Low only if a game has glitches without it.");
     } else if (elementName == "MemorySpinBox") {

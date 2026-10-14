@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <algorithm>
+#include <array>
 #include <codecvt>
 #include <cstdio>
 #include <cstdlib>
@@ -693,13 +694,35 @@ static std::vector<int32_t> PatternToByte(const std::string& pattern) {
 }
 
 void ApplyRenderResolution() {
-    // Same bytes as the community UFC 4 "Resolution WxH" patches: the resolution setup does
-    // mov eax, 900 / mov esi, 1600 (base PS4 render size); replace height and width.
+    // Replaces the base PS4 render size (1600x900) in the game's resolution setup, like the
+    // community "Resolution WxH" patches, without enabling the patch system.
     // SHADPS4_RENDER_RES overrides the launcher setting (Settings -> Graphics).
+    struct RenderResolutionSite {
+        const char* serial;
+        const char* pattern;
+        u32 width_offset;
+        u32 height_offset;
+    };
+    static constexpr std::array sites{
+        // UFC 4 (US, EU): mov eax, 900 / mov esi, 1600.
+        RenderResolutionSite{"CUSA14204", "07 00 00 eb 15 b8 84 03 00 00 be 40 06 00 00 89", 11,
+                             6},
+        RenderResolutionSite{"CUSA14209", "07 00 00 eb 15 b8 84 03 00 00 be 40 06 00 00 89", 11,
+                             6},
+        // UFC 3 (EU): the game selects 1920x1080 or 1600x900 with cmovne; the 1600x900 pair is
+        // replaced.
+        RenderResolutionSite{"CUSA06534",
+                             "45 85 e4 b9 80 07 00 00 bf 40 06 00 00 ba 84 03 00 00 0f 45 f9", 9,
+                             14},
+    };
     const char* env = std::getenv("SHADPS4_RENDER_RES");
     const std::string resolution = env && *env ? std::string{env} : Config::getRenderResolution();
-    // UFC 4: CUSA14204 (US) and CUSA14209 (EU).
-    if (resolution.empty() || (g_game_serial != "CUSA14204" && g_game_serial != "CUSA14209")) {
+    if (resolution.empty()) {
+        return;
+    }
+    const auto site = std::ranges::find_if(
+        sites, [](const RenderResolutionSite& s) { return g_game_serial == s.serial; });
+    if (site == sites.end()) {
         return;
     }
     uint32_t width = 0, height = 0;
@@ -708,13 +731,13 @@ void ApplyRenderResolution() {
         LOG_ERROR(Loader, "Render resolution {} is not WxH (64..3840 x 64..2160)", resolution);
         return;
     }
-    const uintptr_t at = PatternScan("07 00 00 eb 15 b8 84 03 00 00 be 40 06 00 00 89");
+    const uintptr_t at = PatternScan(site->pattern);
     if (at == 0) {
         LOG_ERROR(Loader, "Render resolution: resolution setup not found in {}", g_eboot_name);
         return;
     }
-    std::memcpy(reinterpret_cast<void*>(at + 6), &height, sizeof(height));
-    std::memcpy(reinterpret_cast<void*>(at + 11), &width, sizeof(width));
+    std::memcpy(reinterpret_cast<void*>(at + site->width_offset), &width, sizeof(width));
+    std::memcpy(reinterpret_cast<void*>(at + site->height_offset), &height, sizeof(height));
     LOG_INFO(Loader, "Render resolution {}x{} (patched at {:#x})", width, height, at);
 }
 

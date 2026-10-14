@@ -17,7 +17,7 @@ No changes since 2026-10-14 yet. / Пока нет изменений после
 - Faster start: the intro video is skipped (Settings → General → Skip Intro Video)
 - FPS Limiter sets the real frame rate in UFC (it gave half of it)
 - A new install starts with recommended settings (shaders kept on disk, Readback Speed Low, FPS Limiter value = monitor refresh rate, the limiter itself off); an update keeps your settings
-- Render Resolution for UFC 4 is in the launcher (Settings → Graphics), also for the EU release
+- Render Resolution for UFC 3 and UFC 4 is in the launcher (Settings → Graphics), for UFC 4 also the EU release
 - UFC 4 fighters always have heads, whatever Readback Speed is set to
 - Two controllers: buttons no longer get stuck
 - Launcher: updates from this fork (Main and Beta channels), every setting explains what it does
@@ -32,7 +32,7 @@ No changes since 2026-10-14 yet. / Пока нет изменений после
 - Быстрый запуск: интро-ролик пропускается (Settings → General → Skip Intro Video)
 - FPS Limiter задаёт настоящую частоту кадров в UFC (раньше давал половину)
 - Новая установка сразу с рекомендуемыми настройками (шейдеры сохраняются на диск, Readback Speed Low, значение FPS Limiter = частота монитора, сам лимитер выключен); при обновлении ваши настройки остаются
-- Render Resolution для UFC 4 есть в лаунчере (Settings → Graphics), и для европейской версии тоже
+- Render Resolution для UFC 3 и UFC 4 есть в лаунчере (Settings → Graphics), для UFC 4 и в европейской версии
 - У бойцов UFC 4 всегда есть голова, при любом Readback Speed
 - Два геймпада: кнопки больше не залипают
 - Лаунчер: обновления из этого форка (каналы Main и Beta), у каждой настройки есть описание

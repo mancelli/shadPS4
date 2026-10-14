@@ -24,7 +24,7 @@ Windows only; NVIDIA cards are not tested.
   emulator needed to unpack them.
 - **Fixes for different GPUs:** Intel Arc, AMD Radeon and NVIDIA (NVIDIA not tested).
 - **Controls that work.** No stuck buttons or triggers, also with two gamepads.
-- **Like the console, only better.** UFC 4 at 1080p and higher with one setting (Settings → Graphics), a higher
+- **Like the console, only better.** UFC 3 and UFC 4 at 1080p and higher with one setting (Settings → Graphics), a higher
   frame rate than on PS4 with the FPS Limiter; every setting explains what it does and what it costs.
 
 ### Games
@@ -42,7 +42,7 @@ Other versions (for example 1.00) are not tested.
 - Career and Create Fighter in UFC 4 work fully
 - Clean picture on Intel Arc
 - Fighters look right: skin, hair, shadows
-- UFC 4 in 1080p and higher
+- UFC 3 and UFC 4 in 1080p and higher
 - Stable and quick: no random freezes, less stutter, faster start
 
 …and much more: [full list of changes](CHANGELOG.md).
@@ -56,7 +56,7 @@ Other versions (for example 1.00) are not tested.
 3. Add your games folder in the launcher and start the game. The first start builds shaders and stutters once.
 
 Useful settings:
-- **Settings → Graphics → Render Resolution (UFC 4)**: 1080p and higher.
+- **Settings → Graphics → Render Resolution (UFC 3 / UFC 4)**: 1080p and higher.
 - **Settings → Graphics → FPS Limiter**: your frame rate, for example your monitor's refresh rate.
 - **Settings → General → Skip Intro Video**: on by default.
 
@@ -94,7 +94,7 @@ versions, and donations do not buy specific fixes or dates.
   распаковки не нужен.
 - **Исправления под разные видеокарты:** Intel Arc, AMD Radeon и NVIDIA (на NVIDIA не проверялось).
 - **Рабочее управление.** Кнопки и курки не залипают, в том числе с двумя геймпадами.
-- **Как на консоли, только лучше.** UFC 4 в 1080p и выше одной настройкой (Settings → Graphics), частота кадров
+- **Как на консоли, только лучше.** UFC 3 и UFC 4 в 1080p и выше одной настройкой (Settings → Graphics), частота кадров
   выше, чем на PS4, с FPS Limiter; у каждой настройки написано, что она даёт и чего стоит.
 
 ### Игры
@@ -112,7 +112,7 @@ versions, and donations do not buy specific fixes or dates.
 - Карьера и создание бойца в UFC 4 работают полностью
 - Чистая картинка на Intel Arc
 - Бойцы выглядят как надо: кожа, волосы, тени
-- UFC 4 в 1080p и выше
+- UFC 3 и UFC 4 в 1080p и выше
 - Стабильно и быстро: без зависаний, меньше подтормаживаний, быстрый запуск
 
 …и многое другое: [полный список изменений](CHANGELOG.md).
@@ -127,7 +127,7 @@ versions, and donations do not buy specific fixes or dates.
    подтормаживания.
 
 Полезные настройки:
-- **Settings → Graphics → Render Resolution (UFC 4)**: 1080p и выше.
+- **Settings → Graphics → Render Resolution (UFC 3 / UFC 4)**: 1080p и выше.
 - **Settings → Graphics → FPS Limiter**: ваша частота кадров, например частота монитора.
 - **Settings → General → Skip Intro Video**: включено по умолчанию.
 
