@@ -7,109 +7,111 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 # **⚠️ ВСЕ ИЗМЕНЕНИЯ В ЭТОМ ФОРКЕ ПОЛНОСТЬЮ СДЕЛАНЫ С ПОМОЩЬЮ ИИ (CLAUDE ОТ ANTHROPIC) И ПРОВЕРЕНЫ ЧЕЛОВЕКОМ.**
 
-# UFC 4 / Intel Arc fork of shadPS4
+**[English](#english) · [Русский](#русский)**
 
-A fork of [Shadlix (diegolix29/shadPS4)](https://github.com/diegolix29/shadPS4), which is itself a fork of the
-[shadPS4](https://github.com/shadps4-emu/shadPS4) PS4 emulator. It fixes rendering and gameplay problems found
-while getting **EA SPORTS UFC 4 (CUSA14204)** to run on an **Intel Arc B580**, and includes selected fixes from
-the official shadPS4.
+## English
 
-> [!WARNING]
-> **Windows + Intel Arc only.** Everything was written and tested on **Windows 11 with an Intel Arc B580** (a few
-> checks on a Radeon 780M) with UFC 4. Builds are made for Windows only. The Linux and macOS files in
-> older releases (names start with `UNTESTED`) were **not tested and are not supported**. Other games were not tested.
->
-> **NVIDIA:** the Intel workarounds against black squares are also enabled on NVIDIA GPUs. This is **untested on
-> NVIDIA hardware**; please report results with **Collect Debug Logs** enabled (see below).
+A fork of the [shadPS4](https://github.com/shadps4-emu/shadPS4) PS4 emulator (through
+[Shadlix](https://github.com/diegolix29/shadPS4)) that makes **EA SPORTS UFC 4** playable on PC.
+Made and tested on **Windows 11 with an Intel Arc B580**, with some checks on a Radeon 780M.
+Windows only; NVIDIA cards are not tested.
 
-## How to use
+### Games
 
-1. Download the Windows zip from [Releases](../../releases):
-   - `shadPS4-ufc4-intel-arc-windows-qt-launcher.zip`: with the launcher (recommended);
-   - `shadPS4-ufc4-intel-arc-windows-sdl.zip`: emulator only, start a game with `shadPS4.exe -g "<path>\eboot.bin"`.
+| Game | Version tested | State |
+|---|---|---|
+| UFC 4, CUSA14204 (US) | 28.00 | Career, Create Fighter and fights work |
+| UFC 4, CUSA14209 (EU) | – | Same game, not tested |
+| UFC 3, CUSA06534 (EU) | 1.14 | Menus and quick fights work |
+
+Other versions (for example 1.00) are not tested.
+
+### Main fixes
+
+- Career and Create Fighter in UFC 4 work fully
+- Clean picture on Intel Arc
+- Fighters look right: skin, hair, shadows
+- UFC 4 in 1080p and higher
+- Stable and quick: no random freezes, less stutter, faster start
+
+…and much more: [full list of changes](CHANGELOG.md).
+
+### How to use
+
+1. Download `shadPS4-ufc4-intel-arc-windows-qt-launcher.zip` from [Releases](../../releases).
+   The newest fixes are in the **Beta** pre-release (it can have new bugs).
 2. Unpack **the whole zip** into a new folder and run `shadPS4.exe`. All fixes are on by default.
+3. Add your games folder in the launcher and start the game. The first start builds shaders and stutters once.
 
-**UFC 4 at native 1080p.** The game renders its 3D scene at 1600x900 and scales it up. To render at 1920x1080,
-start the game with `UFC4_1080p.bat` from the zip (in the SDL zip, put your `eboot.bin` path into the file first),
-or set the environment variable yourself:
+Useful settings:
+- **Settings → Graphics → Render Resolution (UFC 4)**: 1080p and higher.
+- **Settings → Graphics → FPS Limiter**: your frame rate, for example your monitor's refresh rate.
+- **Settings → General → Skip Intro Video**: on by default.
 
-```bat
-set SHADPS4_RENDER_RES=1920x1080
-shadPS4.exe -g "C:\path\to\CUSA14204\eboot.bin"
-```
+### If something goes wrong
 
-The first start after an update recompiles shaders, so the game stutters once.
+- **"No Qt platform plugin could be initialized"**: unpack the whole zip into a new folder; do not run the exe
+  from inside the zip.
+- **Anything else**: turn on **Settings → Logger → Collect Debug Logs**, play until the problem happens, then
+  attach the log (**Open Log Location**) to an [issue](../../issues).
 
-## If something goes wrong
+### More
 
-- **"No Qt platform plugin could be initialized":** unpack the whole zip into a new folder (do not run the exe
-  from inside the zip or copy it alone over an older version). If it still happens, remove the
-  `QT_PLUGIN_PATH` and `QT_QPA_PLATFORM_PLUGIN_PATH` environment variables left by other programs.
-- **Any other problem:** in the launcher turn on **Settings → Logger → Collect Debug Logs** (without the launcher:
-  `CollectDebugLogs = true` under `[Debug]` in `config.toml`), play until the problem happens, then send the log
-  file (**Open Log Location**). Turn the option off again afterwards.
+- [Shadlix README](https://github.com/diegolix29/shadPS4/blob/Shadlix/README.md): launcher features of Shadlix.
+- [shadPS4 README](https://github.com/shadps4-emu/shadPS4/blob/main/README.md): the original emulator, building,
+  firmware files, keyboard mapping.
+- License: [GPL-2.0-or-later](LICENSE), like shadPS4.
 
-## Fixes
+## Русский
 
-### Release 2026-10-11.2
+Форк PS4-эмулятора [shadPS4](https://github.com/shadps4-emu/shadPS4) (через
+[Shadlix](https://github.com/diegolix29/shadPS4)), в котором можно играть в **EA SPORTS UFC 4** на ПК.
+Сделан и проверен на **Windows 11 с Intel Arc B580**, частично на Radeon 780M.
+Только Windows; на видеокартах NVIDIA не проверялся.
 
-**UFC 4 status: career mode is fully playable, and the hair bug is fixed.**
+### Игры
 
-| Problem | Fix |
-|---|---|
-| Black squares on NVIDIA GPUs (reported by users) | The Intel workarounds (NaN guard on shader outputs, 1D compute workgroups) are also enabled on NVIDIA (untested) |
-| Created fighter avatars are black | Linear images written by compute shaders are copied back to memory, so the game can save them. Avatars saved with older builds stay black until the fighter is saved again |
-| Shaders that use all 256 vector registers break | The register count is stored in 9 bits instead of 8 |
+| Игра | Проверенная версия | Состояние |
+|---|---|---|
+| UFC 4, CUSA14204 (США) | 28.00 | Карьера, создание бойца и бои работают |
+| UFC 4, CUSA14209 (Европа) | – | Та же игра, не проверялась |
+| UFC 3, CUSA06534 (Европа) | 1.14 | Меню и быстрые бои работают |
 
-From the official shadPS4 (October 2026): NaN handling, RCP/RSQ/LOG clamps, MP3 parser crash fix, subgroup barriers
-for shared memory, Windows memory protection after a region split, MIN/MAX blend factors, EXEC scope after an empty
-branch, instance id unbiasing and step rates with base instance, analog stick smoothing fix.
+Другие версии (например 1.00) не проверялись.
 
-### Release 2026-10-11 (first release)
+### Главные исправления
 
-| Problem | Fix |
-|---|---|
-| Black squares on models, flickering floor, gaps in shadows (Intel) | Subgroup size 32, 1D compute workgroups, LDS ordering barriers, NaN guard on shader outputs |
-| Wrong results of min/max/clamp with NaN | NaN-aware min/max/clamp that matches the PS4 GPU |
-| Shadow acne | Depth bias scaled for the emulated D16S8 depth format |
-| Flat, hard-edged hair | Alpha to coverage (DB_ALPHA_TO_MASK) is emulated |
-| Create Fighter: pieces of other skins after choosing a preset | Fast clears are expanded on FMASK decompress |
-| Create Fighter: grey skin | GPU-compressed textures go through memory; GPU images are flushed before CPU writes |
-| Stutter and heavy memory traffic while editing a fighter | Lazy write-back of storage image aliases (about 87 % less traffic) |
-| Random freeze: the picture stops while sound keeps playing | Self-heal for pages that stay write-protected without an owner |
-| Menus invisible at native resolution | Shaders that read CMASK see every tile as written |
-| Shader compile stutter on every start | Vulkan pipeline cache kept on disk; shader cache writes are atomic; shader patches checked once per shader |
-| UFC 4 renders at 1600x900 | `SHADPS4_RENDER_RES=WxH` changes the UFC 4 render resolution |
+- Карьера и создание бойца в UFC 4 работают полностью
+- Чистая картинка на Intel Arc
+- Бойцы выглядят как надо: кожа, волосы, тени
+- UFC 4 в 1080p и выше
+- Стабильно и быстро: без зависаний, меньше подтормаживаний, быстрый запуск
 
-Also added: **Collect Debug Logs** option (frame times, performance counters, thread dump on freeze), F1 mutes the
-SDL build, `SHADPS4_GPU=<part of the GPU name>` picks the GPU for one run.
+…и многое другое: [полный список изменений](CHANGELOG.md).
 
-### Beta (not released yet)
+### Как пользоваться
 
-These changes are in the [`beta`](../../tree/beta) branch. Its builds are on the
-[Actions](../../actions?query=branch%3Abeta) page (sign in to GitHub to download) and are not tested in the game yet.
+1. Скачайте `shadPS4-ufc4-intel-arc-windows-qt-launcher.zip` в [Releases](../../releases).
+   Самые новые исправления — в пре-релизе **Beta** (в нём могут быть новые баги).
+2. Распакуйте **весь архив** в новую папку и запустите `shadPS4.exe`. Все исправления включены сразу.
+3. Добавьте в лаунчере папку с играми и запустите игру. Первый запуск собирает шейдеры, поэтому один раз будут
+   подтормаживания.
 
-| Problem | Fix |
-|---|---|
-| Two players: one player's block (or another button) stays held until the game restarts | Inputs from both controllers are kept in one consistently sorted list, so a released button can no longer stay stuck |
-| "No Qt platform plugin could be initialized" on some PCs | The launcher ignores Qt plugin paths left by other programs and always loads its own plugins |
-| Unclear settings | Every setting in the launcher describes what it does and what it costs in performance |
-| Render resolution only through a `.bat` file | **Settings → Graphics → Render Resolution (UFC 4)** |
-| The launcher's updater pointed to Shadlix builds | Updates come only from this fork and are checked at startup by default (the launcher asks before downloading). Channels: **Main** (releases) and **Beta** (newest `beta` build, pre-release `beta-latest`) |
-| PKG installer put DLC into the game folder | DLC is installed into the DLC folder; folder errors are shown instead of closing the launcher |
-| Crashes left no trace in the log | The reason of a crash (exception, address, module, thread) is written to the log |
-| UFC 4: fighters without heads (only hair and eyes) with Readback Speed = Disable | UFC 4 always runs with at least **Low** readbacks; the setting's description explains why |
-| The launcher closed while installing a PKG | Fixed (memory corruption in the PKG key decryption) |
-| Installing a large PKG froze the launcher, progress stuck at 0 % | Files are extracted in the background on several threads (about 2.5x faster), progress counts bytes, Cancel works |
-| The launcher crashed every time it was closed (silently) | Fixed |
+Полезные настройки:
+- **Settings → Graphics → Render Resolution (UFC 4)**: 1080p и выше.
+- **Settings → Graphics → FPS Limiter**: ваша частота кадров, например частота монитора.
+- **Settings → General → Skip Intro Video**: включено по умолчанию.
 
-## More information
+### Если что-то не так
 
-- [Shadlix README](https://github.com/diegolix29/shadPS4/blob/Shadlix/README.md): launcher features, Bloodborne
-  options and other features of the Shadlix fork.
-- [shadPS4 README](https://github.com/shadps4-emu/shadPS4/blob/main/README.md): the original emulator, building
-  from source, firmware files, keyboard mappings, the shadPS4 team and contributors.
+- **«No Qt platform plugin could be initialized»**: распакуйте весь архив в новую папку, не запускайте exe прямо
+  из архива.
+- **Любая другая проблема**: включите **Settings → Logger → Collect Debug Logs**, играйте до появления проблемы
+  и приложите лог (**Open Log Location**) к [issue](../../issues).
 
-## License
+### Ещё
 
-[GPL-2.0-or-later](LICENSE), like shadPS4.
+- [README Shadlix](https://github.com/diegolix29/shadPS4/blob/Shadlix/README.md): возможности лаунчера Shadlix.
+- [README shadPS4](https://github.com/shadps4-emu/shadPS4/blob/main/README.md): оригинальный эмулятор, сборка,
+  файлы прошивки, управление с клавиатуры.
+- Лицензия: [GPL-2.0-or-later](LICENSE), как у shadPS4.

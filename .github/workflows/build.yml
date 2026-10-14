@@ -150,8 +150,11 @@ jobs:
         GH_TOKEN: ${{ github.token }}
       run: |
         cp shadps4-win64-qt-*.zip shadPS4-beta-windows-qt-launcher.zip
+        # Release description: the "Beta" section of CHANGELOG.md (English and Russian).
+        awk '/^## /{f=($0 ~ /^## Beta/); next} f' CHANGELOG.md > beta_notes.md
+        printf '\n---\nAutomatic build of the beta branch (%s): not tested in games yet, may contain new bugs.\n\nАвтоматическая сборка ветки beta (%s): в играх ещё не проверялась, возможны новые баги.\n' "$GITHUB_SHA" "$GITHUB_SHA" >> beta_notes.md
         gh release delete beta-latest --cleanup-tag --yes --repo "$GITHUB_REPOSITORY" || true
         gh release create beta-latest shadPS4-beta-windows-qt-launcher.zip \
           --repo "$GITHUB_REPOSITORY" --prerelease --target "$GITHUB_SHA" \
           --title "Beta ${{ needs.get-info.outputs.date }} (${{ needs.get-info.outputs.shorthash }})" \
-          --notes "Automatic build of the beta branch at $GITHUB_SHA. Not tested in games; may contain new bugs. Changes since the last release: see the README section \"Beta (not released yet)\"."
+          --notes-file beta_notes.md
