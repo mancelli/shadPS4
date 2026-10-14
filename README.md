@@ -16,6 +16,17 @@ A fork of the [shadPS4](https://github.com/shadps4-emu/shadPS4) PS4 emulator (th
 Made and tested on **Windows 11 with an Intel Arc B580**, with some checks on a Radeon 780M.
 Windows only; NVIDIA cards are not tested.
 
+### Why this fork
+
+- **Ready for UFC out of the box.** All fixes are on, and a new install starts with settings made for UFC 3 and
+  UFC 4.
+- **One program for everything.** Install the game PKG, its updates and DLC right in the launcher; no second
+  emulator needed to unpack them.
+- **Fixes for different GPUs:** Intel Arc, AMD Radeon and NVIDIA (NVIDIA not tested).
+- **Controls that work.** No stuck buttons or triggers, also with two gamepads.
+- **Like the console, only better.** UFC 4 at 1080p and higher with one setting (Settings → Graphics), a higher
+  frame rate than on PS4 with the FPS Limiter; every setting explains what it does and what it costs.
+
 ### Games
 
 | Game | Version tested | State |
@@ -75,6 +86,16 @@ versions, and donations do not buy specific fixes or dates.
 [Shadlix](https://github.com/diegolix29/shadPS4)), в котором можно играть в **EA SPORTS UFC 4** на ПК.
 Сделан и проверен на **Windows 11 с Intel Arc B580**, частично на Radeon 780M.
 Только Windows; на видеокартах NVIDIA не проверялся.
+
+### Чем этот форк лучше
+
+- **Готов для UFC из коробки.** Все исправления включены, новая установка сразу с настройками под UFC 3 и UFC 4.
+- **Всё в одной программе.** PKG игры, обновления и DLC ставятся прямо в лаунчере, второй эмулятор для
+  распаковки не нужен.
+- **Исправления под разные видеокарты:** Intel Arc, AMD Radeon и NVIDIA (на NVIDIA не проверялось).
+- **Рабочее управление.** Кнопки и курки не залипают, в том числе с двумя геймпадами.
+- **Как на консоли, только лучше.** UFC 4 в 1080p и выше одной настройкой (Settings → Graphics), частота кадров
+  выше, чем на PS4, с FPS Limiter; у каждой настройки написано, что она даёт и чего стоит.
 
 ### Игры
 
