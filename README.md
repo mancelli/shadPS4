@@ -22,7 +22,7 @@ Windows only; NVIDIA cards are not tested.
 |---|---|---|
 | UFC 4, CUSA14204 (US) | 28.00 | Career, Create Fighter and fights work |
 | UFC 4, CUSA14209 (EU) | – | Same game, not tested |
-| UFC 3, CUSA06534 (EU) | 1.14 | Menus and quick fights work |
+| UFC 3, CUSA06534 (EU) | 1.14 | Career and fights work |
 
 Other versions (for example 1.00) are not tested.
 
@@ -75,7 +75,7 @@ Useful settings:
 |---|---|---|
 | UFC 4, CUSA14204 (США) | 28.00 | Карьера, создание бойца и бои работают |
 | UFC 4, CUSA14209 (Европа) | – | Та же игра, не проверялась |
-| UFC 3, CUSA06534 (Европа) | 1.14 | Меню и быстрые бои работают |
+| UFC 3, CUSA06534 (Европа) | 1.14 | Карьера и бои работают |
 
 Другие версии (например 1.00) не проверялись.
 

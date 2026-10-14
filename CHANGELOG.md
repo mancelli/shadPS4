@@ -8,7 +8,7 @@ Each version: English first, then Russian. The text of a version is also its rel
 
 ### English
 
-- UFC 3 runs: menus and quick fights tested
+- UFC 3 works: career and fights tested
 - Fighter shadows stay under the fighters (UFC 3 and UFC 4), the floor is lit again on Radeon iGPUs
 - Faster start: the intro video is skipped (Settings → General → Skip Intro Video)
 - FPS Limiter sets the real frame rate in UFC (it gave half of it)
@@ -22,7 +22,7 @@ Each version: English first, then Russian. The text of a version is also its rel
 
 ### Русский
 
-- UFC 3 запускается: проверены меню и быстрые бои
+- UFC 3 работает: проверены карьера и бои
 - Тени бойцов под бойцами (UFC 3 и UFC 4), на встроенной графике Radeon снова освещён пол
 - Быстрый запуск: интро-ролик пропускается (Settings → General → Skip Intro Video)
 - FPS Limiter задаёт настоящую частоту кадров в UFC (раньше давал половину)
