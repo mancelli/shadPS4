@@ -1961,9 +1961,10 @@ static void ApplyRecommendedSettings() {
     pipelineCacheArchive.base_value = false;
     // UFC 4 draws the fighters' heads from data the CPU reads back from the GPU.
     readbackSpeedMode.base_value = ReadbackSpeed::Low;
-    // Frame rate = monitor refresh rate (the FPS limiter counts the frames the player sees).
+    // The FPS limiter stays off; its value is preset to the monitor refresh rate, so turning it on
+    // gives the smoothest frame rate (the limiter counts the frames the player sees).
     const u32 refresh = Common::GetPrimaryDisplayRefreshRate();
-    fpsLimiterEnabled.base_value = true;
+    fpsLimiterEnabled.base_value = false;
     fpsLimit.base_value = refresh >= 30 ? (refresh > 240 ? 240u : refresh) : 60u;
 }
 
