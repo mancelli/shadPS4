@@ -70,6 +70,10 @@ public:
     std::chrono::nanoseconds GetTotalWait() const {
         return total_wait;
     }
+
+    void SetTargetInterval(std::chrono::nanoseconds interval) {
+        target_interval = interval;
+    }
 };
 
 std::string GetCurrentThreadName();

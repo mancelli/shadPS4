@@ -389,6 +389,13 @@ void VideoOutDriver::PresentThread(std::stop_token token) {
 
     const std::chrono::nanoseconds FpsCap{static_cast<long long>(fps_cap_value_ns)};
 
+    // The FPS limit is the frame rate the player sees. Games flip every (flip_rate + 1)
+    // vblanks (UFC 3 and UFC 4 every 2nd), so the vblank period is the frame period divided by
+    // that; otherwise a limit of 60 gave 30 FPS in those games.
+    const int64_t fps_limit =
+        Config::isFpsLimiterEnabled() ? static_cast<int64_t>(Config::getFpsLimit()) : 0;
+    int applied_flip_rate = 0;
+
     Common::SetCurrentThreadName("shadPS4:PresentThread");
     Common::SetCurrentThreadRealtime(FpsCap);
     Common::AccurateTimer timer{FpsCap};
@@ -404,6 +411,15 @@ void VideoOutDriver::PresentThread(std::stop_token token) {
     };
 
     while (!token.stop_requested()) {
+        if (const int flip_rate = main_port.flip_rate;
+            fps_limit > 0 && flip_rate >= 0 && flip_rate != applied_flip_rate) {
+            applied_flip_rate = flip_rate;
+            const int64_t period_ns = std::max<int64_t>(kNanosPerSec / (fps_limit * (flip_rate + 1)), 1);
+            timer.SetTargetInterval(std::chrono::nanoseconds{period_ns});
+            LOG_INFO(Lib_VideoOut,
+                     "PresentThread: game flips every {} vblanks, FPS limit {} -> vblank every {} ns",
+                     flip_rate + 1, fps_limit, period_ns);
+        }
         timer.Start();
 
         if (DebugState.IsGuestThreadsPaused()) {

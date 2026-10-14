@@ -1640,7 +1640,7 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
     } else if (elementName == "windowSizeGroupBox") {
         text = tr("Width/Height:\\nSets the size of the emulator window at launch, which can be resized during gameplay.\\nThis is different from the in-game resolution.");
     } else if (elementName == "heightDivider") {
-        text = tr("Vblank Frequency:\\nThe frame rate at which the emulator refreshes at (60hz is the baseline, whether the game runs at 30 or 60fps). Changing this may have adverse effects, such as increasing the game speed, or breaking critical game functionality that does not expect this to change!");
+        text = tr("Vblank Frequency:\\nThe frame rate at which the emulator refreshes at (60hz is the baseline, whether the game runs at 30 or 60fps). Changing this may have adverse effects, such as increasing the game speed, or breaking critical game functionality that does not expect this to change!\\nUFC 3 and UFC 4 show a new frame every second vblank, so their frame rate is half this value. To cap the frame rate, use the FPS Limiter instead: it overrides this setting.");
     } else if (elementName == "dumpShadersCheckBox") {
         text = tr("Enable Shaders Dumping:\\nFor technical debugging, saves every shader the game uses to a folder.\\nPerformance: extra disk writes and stutter whenever a new shader appears. Leave off for playing.");
     } else if (elementName == "nullGpuCheckBox") {
@@ -1742,7 +1742,7 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
     } else if (elementName == "FSRGroupBox") {
         text = tr("FSR / RCAS:\\nFSR upscales the game picture to the window size with AMD FidelityFX Super Resolution 1. It does not change the resolution the game renders at.\\nRCAS sharpens the picture. Higher attenuation means less sharpening.\\nPerformance: small GPU cost.");
     } else if (elementName == "fpsLimitGroupBox") {
-        text = tr("FPS Limiter:\\nLimits how many frames per second the emulator presents.\\nCan reduce heat, fan noise and frame time spikes. A limit below the game's own frame rate makes the game run slow or stutter.");
+        text = tr("FPS Limiter:\\nThe highest frame rate the game runs at, in frames per second you see (for example 60 or 75; match your monitor's refresh rate for the smoothest picture). It already accounts for games that show a new frame every second vblank, such as UFC 3 and UFC 4, so 75 means 75 FPS there too.\\nWhen on, it replaces Vblank Frequency. Can reduce heat, fan noise and frame time spikes. In UFC 3 and UFC 4 the game speed does not depend on the frame rate.");
     } else if (elementName == "useHostMemoryFallbackCheckBox") {
         text = tr("Use Host Memory Fallback:\\nPuts GPU buffers into system RAM instead of video memory.\\nCan avoid out-of-memory crashes on graphics cards with little video memory.\\nPerformance: much lower FPS, because the GPU has to read over PCIe. Leave off unless the game crashes with \"out of device memory\".");
     } else if (elementName == "memoryCompressionComboBox") {
