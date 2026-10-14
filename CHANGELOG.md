@@ -6,6 +6,10 @@ Each version: English first, then Russian. The text of a version is also its rel
 
 ## Beta (not released yet)
 
+No changes since 2026-10-14 yet. / Пока нет изменений после 2026-10-14.
+
+## 2026-10-14
+
 ### English
 
 - UFC 3 works: career and fights tested

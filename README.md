@@ -63,6 +63,12 @@ Useful settings:
   firmware files, keyboard mapping.
 - License: [GPL-2.0-or-later](LICENSE), like shadPS4.
 
+### Support
+
+These fixes are made with a paid AI subscription (Claude). If the builds help you, you can chip in for it on
+[Boosty](https://boosty.to/mancelli/donate). Entirely optional: the builds stay free, there are no paid-only
+versions, and donations do not buy specific fixes or dates.
+
 ## Русский
 
 Форк PS4-эмулятора [shadPS4](https://github.com/shadps4-emu/shadPS4) (через
@@ -117,3 +123,9 @@ Useful settings:
 - [README shadPS4](https://github.com/shadps4-emu/shadPS4/blob/main/README.md): оригинальный эмулятор, сборка,
   файлы прошивки, управление с клавиатуры.
 - Лицензия: [GPL-2.0-or-later](LICENSE), как у shadPS4.
+
+### Поддержать
+
+Исправления делаются на платной подписке ИИ (Claude). Если сборки вам помогли, можно скинуться на неё на
+[Boosty](https://boosty.to/mancelli/donate). Только по желанию: сборки остаются бесплатными, закрытых версий нет,
+а за донаты не обещаются конкретные исправления или сроки.
