@@ -1379,6 +1379,28 @@ void TextureCache::TouchImage(Image& image) {
     // Image is still valid
     image.flags &= ~ImageFlagBits::MaybeReused;
 }
+ImageId TextureCache::GetDepthColorAlias(ImageId depth_id) {
+    Image& depth = slot_images[depth_id];
+    if (const auto it = depth_color_aliases.find(depth.image_uid);
+        it != depth_color_aliases.end()) {
+        return it->second;
+    }
+    ImageInfo info = depth.info;
+    info.pixel_format = info.num_bits == 16 ? vk::Format::eR16Uint : vk::Format::eR32Uint;
+    info.props.is_depth = false;
+    info.props.has_stencil = false;
+    info.meta_info = {};
+    const ImageId alias_id = slot_images.Insert(instance, runtime, slot_image_views, info);
+    Image& alias = slot_images[alias_id];
+    alias.flags = ImageFlagBits::GpuModified;
+    depth_color_aliases.emplace(slot_images[depth_id].image_uid, alias_id);
+    LOG_INFO(Render_Vulkan, "Depth color alias for {:#x} {} {}x{} layers={} -> {}",
+             info.guest_address, vk::to_string(slot_images[depth_id].info.pixel_format),
+             info.size.width, info.size.height, info.resources.layers,
+             vk::to_string(info.pixel_format));
+    return alias_id;
+}
+
 void TextureCache::DeleteImage(ImageId image_id) {
     Image& image = slot_images[image_id];
     ASSERT_MSG(!image.IsTracked(), "Image was not untracked");
@@ -1401,6 +1423,14 @@ void TextureCache::DeleteImage(ImageId image_id) {
         if (download_images.contains(image_id)) {
             download_images.erase(image_id);
         }
+    }
+
+    // A color alias of a depth image goes away with it (it is never registered or tracked).
+    if (const auto it = depth_color_aliases.find(image.image_uid);
+        it != depth_color_aliases.end()) {
+        const ImageId alias_id = it->second;
+        depth_color_aliases.erase(it);
+        DeleteImage(alias_id);
     }
 
     // Reclaim image and any image views it references.

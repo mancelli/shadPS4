@@ -28,6 +28,10 @@
 #include "video_core/renderer_vulkan/vk_runtime.h"
 #include "video_core/renderer_vulkan/vk_scheduler.h"
 #include "video_core/renderer_vulkan/vk_shader_hle.h"
+#include "video_core/renderer_vulkan/vk_shader_util.h"
+#include "video_core/renderer_vulkan/vk_platform.h"
+#include "video_core/host_shaders/depth_to_color_16_comp.h"
+#include "video_core/host_shaders/depth_to_color_32_comp.h"
 #include "video_core/texture_cache/image_view.h"
 #include "video_core/texture_cache/texture_cache.h"
 
@@ -54,6 +58,157 @@ static Shader::PushData MakeUserData(const AmdGpu::Regs& regs) {
     push_data.yoffset = regs.viewport_control.yoffset_enable ? regs.viewports[0].yoffset : 0.f;
     push_data.yscale = regs.viewport_control.yscale_enable ? regs.viewports[0].yscale : 1.f;
     return push_data;
+}
+
+// Compute pass that writes the depth of a depth image into its color alias (see
+// TextureCache::GetDepthColorAlias).
+struct Rasterizer::DepthToColorPass {
+    vk::UniqueDescriptorSetLayout desc_layout;
+    vk::UniquePipelineLayout layout;
+    std::array<vk::UniquePipeline, 2> pipelines; // 16-bit, 32-bit
+    vk::UniqueSampler sampler;
+};
+
+// A depth surface that a shader reads through a color format (UFC 3 reads its D16 shadow map as
+// R16_UINT) gets a color copy. SHADPS4_DEPTH_AS_COLOR=0 binds the depth image directly (old
+// behavior: a view Vulkan does not allow, garbage on Intel and AMD).
+static bool DepthAsColorEnabled() {
+    static const bool enabled = [] {
+        const char* env = std::getenv("SHADPS4_DEPTH_AS_COLOR");
+        return !(env && *env == '0');
+    }();
+    return enabled;
+}
+
+void Rasterizer::ConvertDepthToColor(VideoCore::Image& depth, VideoCore::Image& alias) {
+    const auto device = instance.GetDevice();
+    if (!depth_to_color) {
+        auto pass = std::make_unique<DepthToColorPass>();
+        const std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {{
+            {
+                .binding = 0,
+                .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+                .descriptorCount = 1,
+                .stageFlags = vk::ShaderStageFlagBits::eCompute,
+            },
+            {
+                .binding = 1,
+                .descriptorType = vk::DescriptorType::eStorageImage,
+                .descriptorCount = 1,
+                .stageFlags = vk::ShaderStageFlagBits::eCompute,
+            },
+        }};
+        const vk::DescriptorSetLayoutCreateInfo desc_layout_ci = {
+            .flags = vk::DescriptorSetLayoutCreateFlagBits::ePushDescriptorKHR,
+            .bindingCount = static_cast<u32>(bindings.size()),
+            .pBindings = bindings.data(),
+        };
+        pass->desc_layout = Check(device.createDescriptorSetLayoutUnique(desc_layout_ci));
+        const vk::PushConstantRange push_range = {
+            .stageFlags = vk::ShaderStageFlagBits::eCompute,
+            .offset = 0,
+            .size = 2 * sizeof(u32),
+        };
+        const vk::PipelineLayoutCreateInfo layout_ci = {
+            .setLayoutCount = 1U,
+            .pSetLayouts = &(*pass->desc_layout),
+            .pushConstantRangeCount = 1U,
+            .pPushConstantRanges = &push_range,
+        };
+        pass->layout = Check(device.createPipelineLayoutUnique(layout_ci));
+        for (u32 i = 0; i < 2; ++i) {
+            const auto module = i == 0 ? CompileSPV(DEPTH_TO_COLOR_16_COMP, device)
+                                       : CompileSPV(DEPTH_TO_COLOR_32_COMP, device);
+            const vk::ComputePipelineCreateInfo pipeline_ci = {
+                .stage =
+                    vk::PipelineShaderStageCreateInfo{
+                        .stage = vk::ShaderStageFlagBits::eCompute,
+                        .module = module,
+                        .pName = "main",
+                    },
+                .layout = *pass->layout,
+            };
+            pass->pipelines[i] = Check(device.createComputePipelineUnique({}, pipeline_ci));
+            device.destroyShaderModule(module);
+        }
+        const vk::SamplerCreateInfo sampler_ci = {
+            .magFilter = vk::Filter::eNearest,
+            .minFilter = vk::Filter::eNearest,
+            .mipmapMode = vk::SamplerMipmapMode::eNearest,
+            .addressModeU = vk::SamplerAddressMode::eClampToEdge,
+            .addressModeV = vk::SamplerAddressMode::eClampToEdge,
+            .addressModeW = vk::SamplerAddressMode::eClampToEdge,
+        };
+        pass->sampler = Check(device.createSamplerUnique(sampler_ci));
+        depth_to_color = std::move(pass);
+    }
+
+    scheduler.EndRendering();
+    const u32 levels = depth.info.resources.levels;
+    const u32 layers = depth.info.resources.layers;
+    const VideoCore::SubresourceRange full_range{.base = {0, 0}, .extent = {levels, layers}};
+    bool needs_flush = runtime.Transit(&depth, vk::ImageLayout::eDepthStencilReadOnlyOptimal,
+                                       vk::PipelineStageFlagBits2::eComputeShader,
+                                       vk::AccessFlagBits2::eShaderRead, full_range);
+    needs_flush |= runtime.Transit(&alias, vk::ImageLayout::eGeneral,
+                                   vk::PipelineStageFlagBits2::eComputeShader,
+                                   vk::AccessFlagBits2::eShaderWrite, full_range);
+    if (needs_flush) {
+        runtime.FlushBarriers();
+    }
+
+    const bool is16 = depth.info.num_bits == 16;
+    const auto cmdbuf = scheduler.CommandBuffer();
+    cmdbuf.bindPipeline(vk::PipelineBindPoint::eCompute, *depth_to_color->pipelines[is16 ? 0 : 1]);
+    for (u32 level = 0; level < levels; ++level) {
+        VideoCore::ImageViewInfo src_info{};
+        src_info.type = AmdGpu::ImageType::Color2DArray;
+        src_info.format = is16 ? vk::Format::eD16Unorm : vk::Format::eD32Sfloat;
+        src_info.range = {.base = {level, 0}, .extent = {1, layers}};
+        VideoCore::ImageViewInfo dst_info = src_info;
+        dst_info.format = is16 ? vk::Format::eR16Uint : vk::Format::eR32Uint;
+        dst_info.is_storage = true;
+        const auto& src_view = depth.FindView(src_info, false);
+        const auto& dst_view = alias.FindView(dst_info, false);
+        const vk::DescriptorImageInfo src_image{
+            .sampler = *depth_to_color->sampler,
+            .imageView = *src_view.image_view,
+            .imageLayout = vk::ImageLayout::eDepthStencilReadOnlyOptimal,
+        };
+        const vk::DescriptorImageInfo dst_image{
+            .imageView = *dst_view.image_view,
+            .imageLayout = vk::ImageLayout::eGeneral,
+        };
+        const std::array<vk::WriteDescriptorSet, 2> writes = {{
+            {
+                .dstBinding = 0,
+                .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+                .pImageInfo = &src_image,
+            },
+            {
+                .dstBinding = 1,
+                .descriptorCount = 1,
+                .descriptorType = vk::DescriptorType::eStorageImage,
+                .pImageInfo = &dst_image,
+            },
+        }};
+        cmdbuf.pushDescriptorSetKHR(vk::PipelineBindPoint::eCompute, *depth_to_color->layout, 0,
+                                    writes);
+        const u32 w = std::max(depth.info.size.width >> level, 1u);
+        const u32 h = std::max(depth.info.size.height >> level, 1u);
+        const std::array<u32, 2> size{w, h};
+        cmdbuf.pushConstants(*depth_to_color->layout, vk::ShaderStageFlagBits::eCompute, 0,
+                             sizeof(size), size.data());
+        cmdbuf.dispatch((w + 7) / 8, (h + 7) / 8, layers);
+    }
+    static u32 logged = 0;
+    if (logged < 8) {
+        ++logged;
+        LOG_INFO(Render_Vulkan, "Depth as color: {:#x} {}x{} layers={} levels={} -> {}",
+                 depth.info.guest_address, depth.info.size.width, depth.info.size.height, layers,
+                 levels, is16 ? "R16Uint" : "R32Uint");
+    }
 }
 
 Rasterizer::Rasterizer(const Instance& instance_, Scheduler& scheduler_, Runtime& runtime_,
@@ -1035,8 +1190,29 @@ void Rasterizer::BindTextures(const Shader::Info& stage, Shader::Backend::Bindin
 
             bound_images.emplace_back(image_id);
 
-            auto& image = texture_cache.GetImage(image_id);
-            auto& image_view = texture_cache.FindTexture(image_id, desc);
+            // A depth surface read through a color format (e.g. R16_UINT over a D16 shadow map):
+            // Vulkan can't view a depth image with a color format, so bind a color copy.
+            VideoCore::Image* image_ptr = &texture_cache.GetImage(image_id);
+            VideoCore::ImageView* view_ptr = nullptr;
+            if (!is_storage && image_ptr->info.props.is_depth && DepthAsColorEnabled() &&
+                image_ptr->info.num_samples == 1 &&
+                (image_ptr->info.num_bits == 16 || image_ptr->info.num_bits == 32) &&
+                !LiverpoolToVK::IsFormatDepthCompatible(desc.view_info.format) &&
+                !LiverpoolToVK::IsFormatStencilCompatible(desc.view_info.format)) {
+                texture_cache.UpdateImage(image_id);
+                const auto alias_id = texture_cache.GetDepthColorAlias(image_id);
+                // Inserting the alias may move images: look both up again.
+                auto& depth = texture_cache.GetImage(image_id);
+                auto& alias = texture_cache.GetDepthColorAliasImage(alias_id);
+                ConvertDepthToColor(depth, alias);
+                image_ptr = &alias;
+                view_ptr = &alias.FindView(desc.view_info);
+            }
+            if (!view_ptr) {
+                view_ptr = &texture_cache.FindTexture(image_id, desc);
+            }
+            auto& image = *image_ptr;
+            auto& image_view = *view_ptr;
             const auto binding = image.binding;
 
             // The image is either bound as storage in a separate descriptor or bound as render

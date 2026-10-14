@@ -1,0 +1,36 @@
+// SPDX-FileCopyrightText: Copyright 2026 shadPS4 Emulator Project
+// SPDX-License-Identifier: GPL-2.0-or-later
+
+#version 450
+
+// Writes the depth of a depth image into a color image with the guest's bit layout, for shaders
+// that read a depth surface through a color format (e.g. a D16 shadow map as R16_UINT).
+// BITS=16: unorm16 value of the depth (D16, also when D16 is backed by D24/D32 on the host).
+// BITS=32: float bits of the depth (D32).
+
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
+
+layout(binding = 0) uniform sampler2DArray depth_tex;
+#if BITS == 16
+layout(binding = 1, r16ui) uniform writeonly uimage2DArray dst;
+#else
+layout(binding = 1, r32ui) uniform writeonly uimage2DArray dst;
+#endif
+
+layout(push_constant) uniform PushConstants {
+    uvec2 size;
+};
+
+void main() {
+    const uvec3 id = gl_GlobalInvocationID;
+    if (id.x >= size.x || id.y >= size.y) {
+        return;
+    }
+    const float depth = texelFetch(depth_tex, ivec3(id), 0).r;
+#if BITS == 16
+    const uint value = uint(clamp(depth, 0.0, 1.0) * 65535.0 + 0.5);
+#else
+    const uint value = floatBitsToUint(depth);
+#endif
+    imageStore(dst, ivec3(id), uvec4(value, 0u, 0u, 0u));
+}

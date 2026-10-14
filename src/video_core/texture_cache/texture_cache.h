@@ -5,6 +5,7 @@
 
 #include <mutex>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <boost/container/small_vector.hpp>
 #include <tsl/robin_map.h>
@@ -194,6 +195,17 @@ public:
     /// Retrieves the image view with the specified id.
     [[nodiscard]] ImageView& GetImageView(ImageId id) {
         return slot_image_views[id];
+    }
+
+    /// Returns an unregistered color image that mirrors the depth of a depth image in the guest's
+    /// bit layout (D16 -> R16Uint, D32 -> R32Uint), for shaders that read a depth surface through
+    /// a color format. Vulkan can't view a depth image with a color format. The caller fills it.
+    /// Freed together with the depth image.
+    [[nodiscard]] ImageId GetDepthColorAlias(ImageId depth_id);
+
+    /// Accesses a depth color alias without touching the LRU (it is not registered).
+    [[nodiscard]] Image& GetDepthColorAliasImage(ImageId id) {
+        return slot_images[id];
     }
 
     /// Get the associated depth stencil image if it is still valid.
@@ -414,6 +426,7 @@ private:
     TileManager tile_manager;
     tsl::robin_map<u64, Sampler> samplers;
     std::unordered_set<ImageId> download_images;
+    std::unordered_map<u64, ImageId> depth_color_aliases; // depth image uid -> color alias
     u64 total_used_memory = 0;
     u64 trigger_gc_memory = 0;
     u64 pressure_gc_memory = 0;
