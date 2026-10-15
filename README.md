@@ -56,7 +56,8 @@ Other versions (for example 1.00) are not tested.
 3. Add your games folder in the launcher and start the game. The first start builds shaders and stutters once.
 
 Useful settings:
-- **Settings → Graphics → Render Resolution (UFC 3 / UFC 4)**: 1080p and higher.
+- **Settings → Graphics → Render Resolution (UFC 3 / UFC 4)**: 1080p and higher for a sharper picture;
+  1280x720 and lower (experimental) for more FPS on weak PCs.
 - **Settings → Graphics → FPS Limiter**: your frame rate, for example your monitor's refresh rate.
 - **Settings → General → Skip Intro Video**: on by default.
 
@@ -127,7 +128,8 @@ versions, and donations do not buy specific fixes or dates.
    подтормаживания.
 
 Полезные настройки:
-- **Settings → Graphics → Render Resolution (UFC 3 / UFC 4)**: 1080p и выше.
+- **Settings → Graphics → Render Resolution (UFC 3 / UFC 4)**: 1080p и выше для более чёткой картинки;
+  1280x720 и ниже (экспериментально) для большего FPS на слабых ПК.
 - **Settings → Graphics → FPS Limiter**: ваша частота кадров, например частота монитора.
 - **Settings → General → Skip Intro Video**: включено по умолчанию.
 

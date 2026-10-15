@@ -122,6 +122,13 @@ SettingsDialog::SettingsDialog(std::shared_ptr<CompatibilityInfoClass> m_compat_
 
     // Item data is the value stored in config.toml ("" = the game's own resolution).
     ui->renderResolutionComboBox->addItem(tr("Game default (1600x900)"), QString());
+    // Below 1600x900: less GPU work for weak PCs (the game scales the 3D scene up to its output).
+    // Sizes below 1280x720 keep 16:9 but were not tried in the games yet.
+    for (const char* resolution : {"640x360", "768x432", "960x540", "1024x576"}) {
+        ui->renderResolutionComboBox->addItem(QString::fromLatin1(resolution) +
+                                                  tr(" (experimental)"),
+                                              QString::fromLatin1(resolution));
+    }
     for (const char* resolution : {"1280x720", "1920x1080", "2560x1440", "3840x2160"}) {
         ui->renderResolutionComboBox->addItem(QString::fromLatin1(resolution),
                                               QString::fromLatin1(resolution));
@@ -1738,7 +1745,7 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
     } else if (elementName == "shadnetAccountsGroupBox") {
         text = tr("ShadNet Accounts:\\nSign in each player to ShadNet using their NPID and password.\\nOnce signed in, the player's ShadNet online ID is used in place of their local username.");
     } else if (elementName == "renderResolutionGroupBox") {
-        text = tr("Render Resolution (UFC 3 / UFC 4):\\nThe resolution UFC 3 and UFC 4 render their 3D scene at. By default the games use 1600x900 (the base PS4 resolution) and scale it to the window.\\n1920x1080 gives a sharp picture on a 1080p screen. Higher values look sharper but need a faster GPU and more video memory; values above 1920x1080 were not tested.\\nSupported: UFC 4 (CUSA14204, CUSA14209) and UFC 3 (CUSA06534); other games ignore this setting.\\nTakes effect the next time the game starts.");
+        text = tr("Render Resolution (UFC 3 / UFC 4):\\nThe resolution UFC 3 and UFC 4 render their 3D scene at. By default the games use 1600x900 (the base PS4 resolution) and scale it to their output picture.\\n\\nLower (for weak PCs): 1280x720 and below need less GPU power and give more FPS when the GPU is the limit; the picture gets blurrier. Sizes below 1280x720 are experimental: they were not tried in the games yet, so menus or effects may look wrong.\\nHigher: 1920x1080 gives a sharp picture on a 1080p screen. Higher values need a faster GPU and more video memory; values above 1920x1080 were not tested.\\n\\nSupported: UFC 4 (CUSA14204, CUSA14209) and UFC 3 (CUSA06534); other games ignore this setting.\\nTakes effect the next time the game starts.");
     } else if (elementName == "ReadbackSpeedComboBox") {
         text = tr("Readbacks:\\nWhether the emulator copies data the GPU wrote back to game memory when the game reads it on the CPU (for example animation, skinning or physics results calculated on the GPU).\\n\\nOn (recommended): the data is copied when the game reads it. Correct, but each such read waits for the GPU (short stutters in games that read a lot).\\nOff: nothing is copied. Fastest, but games that read GPU results show graphics glitches.\\n\\nUFC 3 and UFC 4 need readbacks: with Off the fighters' heads break (missing or distorted heads).\\nOlder versions had five modes: Disable and Unsafe are now Off; Low, Default and Fast are now On (they behaved the same).");
     } else if (elementName == "MemorySpinBox") {

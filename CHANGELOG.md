@@ -13,6 +13,8 @@ Each version: English first, then Russian. The text of a version is also its rel
   carry over: Disable and Unsafe become Off; Low, Default and Fast become On.
 - Off is no longer silently replaced for UFC 4. Turning readbacks off shows a warning: in UFC 3 and UFC 4 the
   fighters' heads break (missing in UFC 4, distorted polygons on created fighters in UFC 3). On is the default.
+- Render Resolution (UFC 3 / UFC 4) has lower sizes for weak PCs: 1024x576, 960x540, 768x432 and 640x360
+  (experimental: not tried in the games yet).
 
 ### Русский
 
@@ -22,6 +24,8 @@ Each version: English first, then Russian. The text of a version is also its rel
 - Для UFC 4 Off больше не подменяется втихую. При выключении ридбеков появляется предупреждение: в UFC 3 и UFC 4
   ломаются головы бойцов (в UFC 4 пропадают, в UFC 3 у созданных бойцов полигоны выходят за голову). По
   умолчанию стоит On.
+- Render Resolution (UFC 3 / UFC 4): для слабых ПК добавлены разрешения ниже 1280x720 — 1024x576, 960x540,
+  768x432 и 640x360 (экспериментально: в играх ещё не проверялись).
 
 ## 2026-10-14
 
