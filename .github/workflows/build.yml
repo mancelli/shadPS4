@@ -144,7 +144,7 @@ jobs:
 
     # The launcher's "Beta" update channel downloads this pre-release (tag "beta-latest", not "beta": that is the branch).
     - name: Publish beta pre-release
-      if: github.event_name == 'push' && github.ref == 'refs/heads/beta'
+      if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/beta'
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
