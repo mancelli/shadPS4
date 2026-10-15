@@ -275,7 +275,9 @@ vk::ImageView FsrPass::Render(vk::CommandBuffer cmdbuf, vk::ImageView input,
 
         { // rcas
             consts = {};
-            FsrRcasCon(reinterpret_cast<AU1*>(&consts.Const0), Config::getRcasAttenuation());
+            // Attenuation in stops (0 = sharpest). The config stores thousandths (250 = 0.25);
+            // passing that raw value meant 250 stops, i.e. no sharpening at all.
+            FsrRcasCon(reinterpret_cast<AU1*>(&consts.Const0), settings.rcasAttenuation);
             consts.Sample[0] = hdr ? 1 : 0;
 
             std::array<vk::DescriptorImageInfo, 3> img_info{{

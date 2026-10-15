@@ -15,6 +15,8 @@ Each version: English first, then Russian. The text of a version is also its rel
   fighters' heads break (missing in UFC 4, distorted polygons on created fighters in UFC 3). On is the default.
 - Render Resolution (UFC 3 / UFC 4) has lower sizes for weak PCs: 1024x576, 960x540, 768x432 and 640x360
   (experimental: not tried in the games yet).
+- FSR sharpening (RCAS) works again: the attenuation reached the shader as 250 instead of 0.25, which turned
+  sharpening off. It only matters when the window is larger than the game's picture (FSR upscales then).
 
 ### Русский
 
@@ -26,6 +28,8 @@ Each version: English first, then Russian. The text of a version is also its rel
   умолчанию стоит On.
 - Render Resolution (UFC 3 / UFC 4): для слабых ПК добавлены разрешения ниже 1280x720 — 1024x576, 960x540,
   768x432 и 640x360 (экспериментально: в играх ещё не проверялись).
+- Снова работает резкость FSR (RCAS): ослабление доходило до шейдера как 250 вместо 0.25, и резкость была
+  выключена. Это важно только когда окно больше картинки игры (тогда FSR увеличивает её).
 
 ## 2026-10-14
 
