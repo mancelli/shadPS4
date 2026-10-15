@@ -692,7 +692,7 @@ void L::SaveConfigWithOverrides(const std::filesystem::path& path, bool perGame 
     overrides["GPU"]["readbackLinearImages"] = Config::getReadbackLinearImages();
     overrides["GPU"]["shaderSkipsEnabled"] = Config::getShaderSkipsEnabled();
     overrides["GPU"]["directMemoryAccess"] = Config::directMemoryAccess();
-    overrides["GPU"]["readbackSpeedMode"] = static_cast<int>(Config::readbackSpeed());
+    overrides["GPU"]["readbackSpeedMode"] = Config::readbacksEnabled() ? 2 : 0; // Low / Disable
     overrides["GPU"]["presentMode"] = Config::getPresentMode();
 
     overrides["Logging"]["logType"] = Config::getLogType();
@@ -750,25 +750,7 @@ void DrawFullscreenSettingsWindow(bool& is_open) {
             DrawYesNo("Linear Readbacks", Config::getReadbackLinearImages());
             DrawYesNo("DMA Access", Config::directMemoryAccess());
 
-            const char* readbackStr = "Unknown";
-            switch (Config::readbackSpeed()) {
-            case Config::ReadbackSpeed::Disable:
-                readbackStr = "Disable";
-                break;
-            case Config::ReadbackSpeed::Unsafe:
-                readbackStr = "Unsafe";
-                break;
-            case Config::ReadbackSpeed::Low:
-                readbackStr = "Low";
-                break;
-            case Config::ReadbackSpeed::Fast:
-                readbackStr = "Fast";
-                break;
-            case Config::ReadbackSpeed::Default:
-                readbackStr = "Default";
-                break;
-            }
-            ImGui::Text("Readback: %s", readbackStr);
+            DrawYesNo("Readbacks", Config::readbacksEnabled());
             DrawYesNo("Auto Backup", Config::getEnableAutoBackup());
             DrawYesNo("Shader Skips", Config::getShaderSkipsEnabled());
 
@@ -1307,11 +1289,9 @@ void L::DrawPauseStatusWindow(bool& is_open) {
         if (ImGui::BeginTabItem("Advanced")) {
             ImGui::Spacing();
             ImGui::SeparatorText("Readbacks");
-            static const char* readbackOptions[] = {"Disable", "Unsafe", "Low", "Default", "Fast"};
-            static int readbackIndex = static_cast<int>(Config::readbackSpeed());
-            if (ImGui::Combo("Speed", &readbackIndex, readbackOptions,
-                             IM_ARRAYSIZE(readbackOptions))) {
-                Config::setReadbackSpeed(static_cast<Config::ReadbackSpeed>(readbackIndex));
+            bool readbacks = Config::readbacksEnabled();
+            if (ImGui::Checkbox("Readbacks (off breaks UFC 3/4 fighters' heads)", &readbacks)) {
+                Config::setReadbacksEnabled(readbacks);
             }
             bool lr = Config::getReadbackLinearImages();
             if (ImGui::Checkbox("Linear Readbacks", &lr))

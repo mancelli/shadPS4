@@ -34,6 +34,9 @@ enum HideCursorState : u32 {
 
 enum class AudioBackend : u32 { SDL, OpenAL };
 
+// Values stored as GPU.readbackSpeedMode in config.toml. Only two behaviours exist: Disable
+// (readbacks off) and Low (readbacks on). Unsafe, Default and Fast are older names that are read
+// as Disable, Low and Low.
 enum class ReadbackSpeed : u32 {
     Disable,
     Unsafe,
@@ -195,11 +198,9 @@ std::string sideTrophy();
 bool nullGpu();
 bool copyGPUCmdBuffers();
 void setCopyGPUCmdBuffers(bool enable);
-ReadbackSpeed readbackSpeed();
-// The mode the GPU emulation uses: readbackSpeed(), except that games which cannot run without
-// readbacks get Low instead of Disable or Unsafe.
-ReadbackSpeed gpuReadbackSpeed();
-void setReadbackSpeed(ReadbackSpeed mode);
+// Readbacks: copy data the GPU wrote back to game memory when the game reads it on the CPU.
+bool readbacksEnabled();
+void setReadbacksEnabled(bool enable);
 bool setReadbackLinearImages(bool enable);
 bool getReadbackLinearImages();
 bool setScreenTipDisable(bool enable);

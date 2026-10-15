@@ -4,6 +4,7 @@
 #include <fstream>
 #include <QDesktopServices>
 #include <QDialogButtonBox>
+#include <QMessageBox>
 
 #include <toml.hpp>
 #include "common/config.h"
@@ -373,6 +374,17 @@ GameSpecificDialog::GameSpecificDialog(std::shared_ptr<CompatibilityInfoClass> c
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &QWidget::close);
 
     ui->ReadbackSpeedComboBox->installEventFilter(this);
+
+    // Readbacks: index 0 = Off, 1 = On. Warn when the player turns them off.
+    connect(ui->ReadbackSpeedComboBox, &QComboBox::activated, this, [this](int index) {
+        if (index == 0) {
+            QMessageBox::warning(
+                this, tr("Readbacks Off"),
+                tr("With readbacks off, games that read GPU results on the CPU show graphics "
+                   "glitches.\nIn UFC 3 and UFC 4 the fighters' heads break (missing or "
+                   "distorted heads).\nTurn readbacks on again if you see such problems."));
+        }
+    });
     ui->MemorySpinBox->installEventFilter(this);
     ui->FmemSpinBox->installEventFilter(this);
 }
@@ -513,7 +525,7 @@ void GameSpecificDialog::LoadValuesFromConfig() {
     ui->RCASSpinBox->setValue(ui->RCASSlider->value() / 1000.0);
     ui->RCASCheckBox->setChecked(Config::getRcasEnabled());
     ui->ReadbacksLinearCheckBox->setChecked(Config::getReadbackLinearImages());
-    ui->ReadbackSpeedComboBox->setCurrentIndex(static_cast<int>(Config::readbackSpeed()));
+    ui->ReadbackSpeedComboBox->setCurrentIndex(Config::readbacksEnabled() ? 1 : 0);
     ui->widthSpinBox->setValue(Config::getWindowWidth());
     ui->heightSpinBox->setValue(Config::getWindowHeight());
     ui->SkipsCheckBox->setChecked(Config::getShaderSkipsEnabled());
@@ -725,7 +737,9 @@ void GameSpecificDialog::LoadValuesFromConfig() {
         if (gpu.contains("readbackLinearImages"))
             ui->ReadbacksLinearCheckBox->setChecked(toml::find<bool>(gpu, "readbackLinearImages"));
         if (gpu.contains("readbackSpeedMode"))
-            ui->ReadbackSpeedComboBox->setCurrentIndex(toml::find<int>(gpu, "readbackSpeedMode"));
+            // 0 Disable, 1 Unsafe = Off; 2 Low, 3 Default, 4 Fast = On.
+            ui->ReadbackSpeedComboBox->setCurrentIndex(
+                toml::find<int>(gpu, "readbackSpeedMode") <= 1 ? 0 : 1);
         if (gpu.contains("windowWidth"))
             ui->widthSpinBox->setValue(toml::find<int>(gpu, "windowWidth"));
         if (gpu.contains("windowHeight"))
@@ -922,7 +936,7 @@ void GameSpecificDialog::UpdateSettings() {
 
     overrides["GPU"]["rcasEnabled"] = ui->RCASCheckBox->isChecked();
     overrides["GPU"]["readbackLinearImages"] = ui->ReadbacksLinearCheckBox->isChecked();
-    overrides["GPU"]["readbackSpeedMode"] = ui->ReadbackSpeedComboBox->currentIndex();
+    overrides["GPU"]["readbackSpeedMode"] = ui->ReadbackSpeedComboBox->currentIndex() == 1 ? 2 : 0;
     overrides["GPU"]["windowWidth"] = ui->widthSpinBox->value();
     overrides["GPU"]["windowHeight"] = ui->heightSpinBox->value();
     overrides["GPU"]["shaderSkipsEnabled"] = ui->SkipsCheckBox->isChecked();

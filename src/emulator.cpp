@@ -318,7 +318,7 @@ void Emulator::Run(std::filesystem::path file, std::vector<std::string> args,
     LOG_INFO(Config, "General isConnectedToNetwork: {}", Config::getIsConnectedToNetwork());
     LOG_INFO(Config, "General isShadNetEnabled: {}", Config::getShadNetEnabled(0));
     LOG_INFO(Config, "GPU isNullGpu: {}", Config::nullGpu());
-    LOG_INFO(Config, "GPU readbackSpeed: {}", magic_enum::enum_name(Config::readbackSpeed()));
+    LOG_INFO(Config, "GPU readbacks: {}", Config::readbacksEnabled() ? "on" : "off");
     LOG_INFO(Config, "GPU readbackLinearImages: {}", Config::getReadbackLinearImages());
     LOG_INFO(Config, "GPU directMemoryAccess: {}", Config::directMemoryAccess());
     LOG_INFO(Config, "GPU shouldDumpShaders: {}", Config::dumpShaders());
@@ -387,11 +387,6 @@ void Emulator::Run(std::filesystem::path file, std::vector<std::string> args,
     if (!id.empty()) {
         MemoryPatcher::g_game_serial = id;
         Libraries::Np::NpTrophy::game_serial = id;
-        if (Config::gpuReadbackSpeed() != Config::readbackSpeed()) {
-            LOG_INFO(Config, "GPU readbackSpeed {} would hide parts of this game, using {}",
-                     magic_enum::enum_name(Config::readbackSpeed()),
-                     magic_enum::enum_name(Config::gpuReadbackSpeed()));
-        }
 
         const auto trophyDir =
             Common::FS::GetUserPath(Common::FS::PathType::MetaDataDir) / id / "TrophyFiles";

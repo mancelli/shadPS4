@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2025 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
 
-#include <atomic>
 #include <cstdlib>
 #include <fstream>
 #include <map>
@@ -17,7 +16,6 @@
 #include "common/config.h"
 #include "common/logging/formatter.h"
 #include "common/logging/log.h"
-#include "common/memory_patcher.h"
 #include "common/path_util.h"
 #include "common/scm_rev.h"
 #include "common/thread.h"
@@ -1229,39 +1227,19 @@ bool copyGPUCmdBuffers() {
     return shouldCopyGPUBuffers.get();
 }
 
-ReadbackSpeed readbackSpeed() {
-    return readbackSpeedMode.get();
+// Off is Disable; on is Low. The older values Unsafe (behaved like Disable) and Default/Fast
+// (behaved like Low) are read as those two.
+static ReadbackSpeed NormalizeReadbackSpeed(int value) {
+    return value <= static_cast<int>(ReadbackSpeed::Unsafe) ? ReadbackSpeed::Disable
+                                                            : ReadbackSpeed::Low;
 }
 
-// UFC 4 reads results of its compute shaders for the fighters' heads on the CPU. Without
-// readbacks it reads stale memory and the heads are not drawn (only hair and eyes remain).
-static bool GameNeedsReadbacks() {
-    // 0 = no game loaded yet, 1 = no, 2 = yes
-    static std::atomic<u8> state{0};
-    u8 value = state.load(std::memory_order_relaxed);
-    if (value == 0) {
-        const std::string& serial = MemoryPatcher::g_game_serial;
-        if (serial.empty()) {
-            return false;
-        }
-        value = serial == "CUSA14204" || serial == "CUSA14209" ? 2 : 1;
-        state.store(value, std::memory_order_relaxed);
-    }
-    return value == 2;
+bool readbacksEnabled() {
+    return readbackSpeedMode.get() != ReadbackSpeed::Disable;
 }
 
-ReadbackSpeed gpuReadbackSpeed() {
-    const ReadbackSpeed mode = readbackSpeed();
-    // Disable and Unsafe never copy GPU data back for CPU reads.
-    if ((mode == ReadbackSpeed::Disable || mode == ReadbackSpeed::Unsafe) &&
-        GameNeedsReadbacks()) {
-        return ReadbackSpeed::Low;
-    }
-    return mode;
-}
-
-void setReadbackSpeed(ReadbackSpeed mode) {
-    readbackSpeedMode.base_value = mode;
+void setReadbacksEnabled(bool enable) {
+    readbackSpeedMode.base_value = enable ? ReadbackSpeed::Low : ReadbackSpeed::Disable;
 }
 
 bool setReadbackLinearImages(bool enable) {
@@ -1959,7 +1937,7 @@ static void ApplyRecommendedSettings() {
     // Shaders are kept on disk, so they are not compiled again on every start.
     pipelineCacheEnable.base_value = true;
     pipelineCacheArchive.base_value = false;
-    // UFC 4 draws the fighters' heads from data the CPU reads back from the GPU.
+    // UFC 3 and UFC 4 build the fighters' heads from data the CPU reads back from the GPU.
     readbackSpeedMode.base_value = ReadbackSpeed::Low;
     // The FPS limiter stays off; its value is preset to the monitor refresh rate, so turning it on
     // gives the smoothest frame rate (the limiter counts the frames the player sees).
@@ -2124,11 +2102,11 @@ void load(const std::filesystem::path& path, bool is_game_specific) {
 
         if (is_game_specific) {
             if (auto opt = toml::get_optional<int>(gpu, "readbackSpeedMode")) {
-                readbackSpeedMode.game_specific_value = static_cast<ReadbackSpeed>(*opt);
+                readbackSpeedMode.game_specific_value = NormalizeReadbackSpeed(*opt);
             }
         } else {
             if (auto opt = toml::get_optional<int>(gpu, "readbackSpeedMode")) {
-                readbackSpeedMode.base_value = static_cast<ReadbackSpeed>(*opt);
+                readbackSpeedMode.base_value = NormalizeReadbackSpeed(*opt);
             }
         }
         if (is_game_specific) {
