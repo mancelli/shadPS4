@@ -3,7 +3,6 @@ version = 1
 [[annotations]]
 path = [
     "REUSE.toml",
-    "crowdin.yml",
     "CMakeSettings.json",
     "CMakeDarwinPresets.json",
     "CMakeLinuxPresets.json",
@@ -11,21 +10,12 @@ path = [
     "CMakePresets.json",
     ".github/FUNDING.yml",
     ".github/shadps4.png",
-	".github/workflows/scripts/update_translation.sh",
-	".github/workflows/update_translation.yml",
     ".gitmodules",
     "dist/MacOSBundleInfo.plist.in",
     "dist/net.shadps4.shadPS4.desktop",
     "dist/net.shadps4.shadPS4_metadata.pot",
     "dist/net.shadps4.shadPS4.metainfo.xml",
-    "documents/changelog.md",
-    "documents/Quickstart/2.png",
-    "documents/Screenshots/*",
-    "documents/Screenshots/Linux/*",
-    "documents/Screenshots/Windows/*",
     "externals/MoltenVK/MoltenVK_icd.json",
-    "flake.lock",
-    "scripts/ps4_names.txt",
     "src/images/bronze.png",
     "src/images/gold.png",
     "src/images/platinum.png",
@@ -184,4 +174,9 @@ SPDX-License-Identifier = "MIT"
 [[annotations]]
 path = "dist/qt.conf"
 SPDX-FileCopyrightText = "shadPS4 Emulator Project"
+SPDX-License-Identifier = "GPL-2.0-or-later"
+
+[[annotations]]
+path = "documents/research/*.json"
+SPDX-FileCopyrightText = "2026 mancelli/shadPS4 fork"
 SPDX-License-Identifier = "GPL-2.0-or-later"

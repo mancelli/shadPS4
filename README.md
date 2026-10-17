@@ -73,6 +73,8 @@ Useful settings:
 - [Shadlix README](https://github.com/diegolix29/shadPS4/blob/Shadlix/README.md): launcher features of Shadlix.
 - [shadPS4 README](https://github.com/shadps4-emu/shadPS4/blob/main/README.md): the original emulator, building,
   firmware files, keyboard mapping.
+- [Research notes](documents/research/README.md): for developers, how the fixes work, investigations
+  and a commit-by-commit map for porting them to newer builds.
 - License: [GPL-2.0-or-later](LICENSE), like shadPS4.
 
 ### Support
@@ -145,6 +147,8 @@ versions, and donations do not buy specific fixes or dates.
 - [README Shadlix](https://github.com/diegolix29/shadPS4/blob/Shadlix/README.md): возможности лаунчера Shadlix.
 - [README shadPS4](https://github.com/shadps4-emu/shadPS4/blob/main/README.md): оригинальный эмулятор, сборка,
   файлы прошивки, управление с клавиатуры.
+- [Исследования](documents/research/README.md): для разработчиков — как устроены исправления, разборы
+  проблем и карта коммитов для переноса в новые сборки.
 - Лицензия: [GPL-2.0-or-later](LICENSE), как у shadPS4.
 
 ### Поддержать
