@@ -5,8 +5,9 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 # What this fork changes, commit by commit
 
-A map for porting these fixes to a newer shadPS4 or Shadlix. State: branch `beta` at d552df8
-(2026-10-15), 66 commits on top of Shadlix `88bd144` (diegolix29/shadPS4, branch `Shadlix`,
+A map for porting these fixes to a newer shadPS4 or Shadlix. State: code at d552df8
+(2026-10-15; branch `mancelli-shadPS4-UFC3/4` since `beta` was merged into it on 2026-10-17),
+66 commits on top of Shadlix `88bd144` (diegolix29/shadPS4, branch `Shadlix`,
 2026-10-05). Every commit message explains the problem, the change and how it was checked; read
 it with `git show <hash>` before porting. User-facing wording of the same changes:
 [CHANGELOG.md](../../CHANGELOG.md).

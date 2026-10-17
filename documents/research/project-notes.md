@@ -5,7 +5,7 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 # How this fork is run: branches, builds, releases, open problems
 
-State on 2026-10-17.
+State on 2026-10-17, when work on the fork ended. These notes describe the final state.
 
 ## Origin
 
@@ -22,11 +22,14 @@ State on 2026-10-17.
 
 ## Branches
 
-| Branch | Role |
-|---|---|
-| `mancelli-shadPS4-UFC3/4` | Default branch, state of the latest release (2026-10-14, `12739d2`). Formerly `ufc4-intel-arc` |
-| `beta` | Everything not released yet. New work goes here |
-| `Shadlix` | Mirror of the upstream base, not touched |
+There is one branch, `mancelli-shadPS4-UFC3/4` (default, formerly `ufc4-intel-arc`). On 2026-10-17
+the `beta` branch was merged into it and removed, and so was `Shadlix` (the mirror of the upstream
+base; its commit `88bd144` is in the history).
+
+- Code of the branch = the newest build, pre-release `beta-latest` (d552df8, built by a manual CI
+  run on 2026-10-15). Commits after d552df8 change only documents and remove unused files.
+- Latest full release: 2026-10-14 (`12739d2`). The changes in the "Beta" section of CHANGELOG.md
+  are only in the pre-release.
 
 ## Builds (CI)
 
@@ -47,7 +50,8 @@ State on 2026-10-17.
   its message does not either.
 - A push to `beta` (or a manual run on `beta`) replaces the pre-release `beta-latest` with the new
   build (`shadPS4-beta-windows-qt-launcher.zip`); its description is the "Beta" section of
-  CHANGELOG.md.
+  CHANGELOG.md. The `beta` branch no longer exists: to publish beta builds again, create a branch
+  named `beta` from the main branch.
 
 ## Releases and the updater
 

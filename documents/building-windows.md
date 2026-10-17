@@ -7,8 +7,8 @@ SPDX-License-Identifier: GPL-2.0-or-later
 
 > [!NOTE]
 > This is the official shadPS4 guide. For this fork, clone `https://github.com/mancelli/shadPS4`
-> (branch `beta` for the newest code) instead of `shadps4-emu/shadPS4`. The exact commands the
-> fork's CI uses are in [research/project-notes.md](research/project-notes.md#builds-ci).
+> instead of `shadps4-emu/shadPS4`. The exact commands the fork's CI uses are in
+> [research/project-notes.md](research/project-notes.md#builds-ci).
 
 This tutorial reads as if you have none of the prerequisites already installed. If you do, just ignore the steps regarding installation.
 > [!WARNING]
