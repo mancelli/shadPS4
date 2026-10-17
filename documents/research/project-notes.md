@@ -33,7 +33,8 @@ State on 2026-10-17.
 `.github/workflows/build.yml`, Windows only:
 
 - `windows-sdl` and `windows-qt` (Qt 6.9.3, `windeployqt`, `dist/qt.conf` copied next to the exe).
-- Configure and build exactly as CI does (Visual Studio 2022 build tools, clang-cl, Ninja):
+- Configure and build with the same flags as CI (clang-cl and Ninja from Visual Studio build tools;
+  CI runs on GitHub's `windows-2025` images and adds ccache launchers):
 
   ```
   cmake --fresh -G Ninja -B build -DCMAKE_BUILD_TYPE=Release -DENABLE_QT_GUI=ON -DENABLE_UPDATER=ON -DCMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE=ON -DCMAKE_C_COMPILER=clang-cl -DCMAKE_CXX_COMPILER=clang-cl
@@ -62,7 +63,8 @@ State on 2026-10-17.
 
 - README: the AI notice on top, then only usage and the main fixes; full list in CHANGELOG.md;
   links to the Shadlix and shadPS4 READMEs instead of their text.
-- Model names are not written into repository files or commit messages.
+- Model names are not written into repository files; commit messages carry only the standard
+  `Co-Authored-By` attribution trailer.
 - Claims in documents are checked against the code; guesses are marked as hypotheses.
 
 ## Open problems
@@ -89,11 +91,19 @@ git history and in the official shadPS4 repository:
 - `documents/building-linux.md`, `building-macos.md`, `building-docker.md`, `Docker Builder/`;
 - `documents/Screenshots/` (upstream screenshots) and `documents/changelog.md` (upstream changelog
   up to v0.4.0, 2024);
-- `scripts/` (NID name list and its generator; the generated `aerolib.inl` is kept in
-  `src/core/aerolib/`);
-- `.github/ISSUE_TEMPLATE/` (upstream forms that sent reports to the shadPS4 Discord) and
-  `CONTRIBUTING.md` (upstream's rules for pull requests).
+- `scripts/` (the NID name list `ps4_names.txt` and its generator `ps4_names2stubs.py`, needed only
+  to regenerate `src/core/aerolib/aerolib.inl`, which is kept; and `file_formats/sfo.hexpat`, an
+  ImHex pattern for param.sfo);
+- `.github/ISSUE_TEMPLATE/` (upstream issue forms: they asked for official upstream builds, turned
+  blank issues off and linked the shadPS4 Discord; blank issues work again) and `CONTRIBUTING.md`
+  (upstream's style and pull request rules).
 
-Kept although Windows does not need them: `CMakeLinuxPresets.json`, `CMakeDarwinPresets.json`,
-`dist/` and `.github/shadps4.png`. `CMakeLists.txt` and `CMakePresets.json` reference them, so the
-source tree still configures on Linux and macOS.
+Before sending any of these fixes to the official shadPS4, read its
+[CONTRIBUTING.md](https://github.com/shadps4-emu/shadPS4/blob/main/CONTRIBUTING.md): code style, and
+rules for AI-assisted pull requests (disclosure, human-written descriptions and comments).
+
+`dist/qt.conf` is used by the Windows build (CI copies it next to the exe). Kept although Windows
+does not need them: `CMakeLinuxPresets.json`, `CMakeDarwinPresets.json`, the other `dist/` files
+(Linux desktop entry, AppStream metadata, macOS bundle plist) and `.github/shadps4.png`.
+`CMakeLists.txt` and `CMakePresets.json` reference them, so the source tree still configures on
+Linux and macOS.

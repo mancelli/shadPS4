@@ -31,8 +31,8 @@ override), but it changed emulation in one file only:
 
 | Mode | `ChangeRegionState` (GPU wrote pages) | `ForEachModifiedRange` (clear) | `flushes[page]` counter |
 |---|---|---|---|
-| Disable | `UpdateProtection<!enable, false>` | `UpdateProtection<true, false>` | no |
-| Unsafe | `UpdateProtection<!enable, false>` | `UpdateProtection<false, false>` | no |
+| Disable | `UpdateProtection<!enable, false>` | `UpdateProtection<true, false>` | counts |
+| Unsafe | `UpdateProtection<!enable, false>` | `UpdateProtection<false, false>` | counts |
 | Low | `UpdateProtection<enable, true>` | `UpdateProtection<false, true>` | no |
 | Default | same as Low | same as Low | counts |
 | Fast | same as Low | same as Low | counts |
@@ -44,7 +44,7 @@ So there were two behaviours:
 - **Low / Default / Fast:** pages are read-protected and copied back on CPU access.
 
 **Why Low, Default and Fast were the same [VERIFIED].** The only difference is the `flushes`
-counter. Its value is returned only by `NumFlushes()`, which is called only by
+counter (counted for every mode except Low, `region_manager.h:113-116` at `cdfb6fa^`). Its value is returned only by `NumFlushes()`, which is called only by
 `ForEachPreemptiveFlushPage()` (`memory_tracker.h:77`). That function selects pages flushed 16 or
 more times (`PREEMPTIVE_FLUSH_THRESHOLD`, `memory_tracker.h:21`) to copy them before the CPU asks.
 Nothing calls it: Shadlix added the counter but never wired up the preemptive flush. Default and

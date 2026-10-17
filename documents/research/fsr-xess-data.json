@@ -262,7 +262,7 @@
     {
      "claim": "The launcher already offers sub-900p resolutions (640x360..1024x576 experimental, 1280x720), added in commit ab79153.",
      "holds": true,
-     "correction": "Context the report omits: 1280x720 has existed since commit 1a54440 (2026-10-13, the UFC 4 selector). The sub-720p sizes were added by commit ab79153, authored 2026-10-15 15:22 UTC by Claude in this same session (session_01Up9iTbk6GTMyXFtJXn86JK). That commit is already on origin/beta. Its own message and the tooltip say these sizes were never tested in the games. Presenting this as 'the launcher already has' hides that it was added today, untested. The setting is global only: there is no render-resolution control in game_specific_dialog.",
+     "correction": "Context the report omits: 1280x720 has existed since commit 1a54440 (2026-10-13, the UFC 4 selector). The sub-720p sizes were added by commit ab79153, authored 2026-10-15 15:22 UTC during the same work. That commit is already on origin/beta. Its own message and the tooltip say these sizes were never tested in the games. Presenting this as 'the launcher already has' hides that it was added today, untested. The setting is global only: there is no render-resolution control in game_specific_dialog.",
      "source": "git log -S renderResolutionComboBox; git show ab79153; git branch -vv (beta = origin/beta at ab79153); settings_dialog.cpp:123-135,1748"
     },
     {

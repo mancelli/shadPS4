@@ -80,7 +80,7 @@ See [launcher-pkg-and-qt.md](launcher-pkg-and-qt.md) for the PKG and Qt plugin i
 
 | Commit | Change |
 |---|---|
-| 6750a4c | Qt plugin lookup ignores `QT_PLUGIN_PATH` / `QT_QPA_PLATFORM_PLUGIN_PATH`, adds `<exe>/qtplugins`; argv kept alive for QApplication |
+| 6750a4c | Qt plugin lookup ignores `QT_PLUGIN_PATH`, `QT_QPA_PLATFORM_PLUGIN_PATH` and `QT_QPA_PLATFORM`, adds `<exe>/qtplugins`; argv kept alive for QApplication |
 | a971a34 | DLC (`CATEGORY=ac`) installed to `<DLC folder>/<title id>/<entitlement label>`; `gp` = update; filesystem errors shown instead of a crash |
 | a3ee89a | PKG install closed the launcher (heap corruption in CryptoPP RSA): the library's ASM/alignment definitions are now INTERFACE definitions too (`externals/CMakeLists.txt`) |
 | 63f4890 | PKG extraction on up to 8 worker threads, progress in bytes, Cancel; about 2.5x faster |

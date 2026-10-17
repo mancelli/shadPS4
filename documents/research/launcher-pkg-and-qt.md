@@ -25,8 +25,9 @@ same version; its file list matched the earlier release. So the cause is on the 
 `QT_DEBUG_PLUGINS=1` in a command prompt, then `shadPS4.exe` from the same prompt, prints which
 plugin Qt tried and why it failed.
 
-**Fix (6750a4c, `src/qt_gui/main.cpp:54-67`):** before QApplication is created the launcher clears
-both variables and adds `<exe folder>/qtplugins` to the library paths, which removes cause 2. Also
+**Fix (6750a4c, `src/qt_gui/main.cpp:50-68`):** before QApplication is created the launcher clears
+`QT_QPA_PLATFORM_PLUGIN_PATH`, `QT_PLUGIN_PATH` and `QT_QPA_PLATFORM` and adds
+`<exe folder>/qtplugins` and the exe folder to the library paths, which removes cause 2. Also
 fixed: the converted argv was freed while QApplication still used it.
 
 ## 2. PKG install

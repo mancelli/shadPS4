@@ -32,8 +32,8 @@ goes back to 0; the other keeps the old "fully pressed" value, and the emulator 
 
 ## Fix
 
-Button-down events use the same ordering as axes (`InputID`'s, gamepad id first). One line; the
-comment at `input_handler.cpp:934-938` explains it.
+Button-down events use the same ordering as axes (`InputID`'s, gamepad id first): one changed
+statement, explained by the comment at `input_handler.cpp:934-938`.
 
 ## Simulation
 

@@ -136,8 +136,8 @@ and still crashed, so the crash does not depend on one driver version.
 ### 2.1 What was checked and found correct [VERIFIED]
 
 - **Detile and upload math for Thick1DThick 32 bpp is in bounds.** I reimplemented
-  `UpdateSize` (micro path) and the shader's micro-thick addressing (script:
-  `scratchpad/sim_thick.py`). For 32³, 16³, 64³, 32³ with 6 mips, 64×64×16 with 7 mips, 8³
+  `UpdateSize` (micro path) and the shader's micro-thick addressing (a standalone
+  Python script, not kept; see Appendix A). For 32³, 16³, 64³, 32³ with 6 mips, 64×64×16 with 7 mips, 8³
   with 4 mips, 256×256×4 with 9 mips, 33³ and 17×9×3 with 3 mips: the highest tiled read
   end equals `guest_size` exactly, the dispatch covers exactly `guest_size/4` texels, no
   invocation runs past the last mip, and every upload region stays inside the staging
@@ -361,7 +361,7 @@ The detiler log line is written before `createComputePipelineUnique` (tile_manag
 
 ## Appendix A — Simulation
 
-The script is `scratchpad/sim_thick.py` (Python, standalone). It mirrors `UpdateSize`
+The script (Python, standalone) was not kept with these notes. It mirrored `UpdateSize`
 (micro path), `ImageSizeMicroTiled`, `GetMipLevel` and the micro-thick address function, and
 checks each read against `guest_size`, the dispatch coverage and the upload copy extents. Every
 tested case reported max read end == `guest_size`, dispatched bytes == `guest_size`, no
