@@ -56,7 +56,7 @@ const std::vector<std::string> audioBackendOptions = {"SDL", "OpenAL"};
 const std::vector<std::string> presentModeOptions = {"Mailbox", "Fifo", "Immediate"};
 const std::vector<std::string> hideCursorOptions = {"Never", "Idle", "Always"};
 const std::vector<std::string> trophySideOptions = {"left", "right", "top", "bottom"};
-const std::vector<std::string> readbacksModeOptions = {"Disabled", "Relaxed", "Precise"};
+const std::vector<std::string> readbacksModeOptions = {"Off", "On"};
 
 //////////////// Setting Variables
 //////////////// Note:: Use int for all comboboxes as needed by ImGui
@@ -446,7 +446,7 @@ void LoadCategory(SettingsCategory category) {
 
             AddSettingSliderInt("Additional DMem Allocation", extraDmemSetting, 0, 20000);
             AddSettingSliderInt("Vblank Frequency", vblankFrequencySetting, 30, 360);
-            AddSettingCombo("Readbacks Mode", readbacksModeSetting, readbacksModeOptions);
+            AddSettingCombo("Readbacks", readbacksModeSetting, readbacksModeOptions);
             AddSettingBool("Enable Readback Linear Images", readbackLinearImagesSetting);
             AddSettingBool("Enable Direct Memory Access", directMemoryAccessSetting);
             AddSettingBool("Enable Devkit Console Mode", devkitConsoleSetting);
@@ -550,7 +550,7 @@ void SaveSettings(std::string profile, bool isGameSpecific) {
     Config::setSeparateLogFilesEnabled(separateLogSetting);
 
     /////////// Experimental Tab
-    Config::setReadbackSpeed(static_cast<Config::ReadbackSpeed>(readbacksModeSetting));
+    Config::setReadbacksEnabled(readbacksModeSetting == 1);
     Config::setReadbackLinearImages(readbackLinearImagesSetting);
     Config::setDirectMemoryAccess(directMemoryAccessSetting);
     Config::setDevKitMode(devkitConsoleSetting);
@@ -620,7 +620,7 @@ void LoadSettings(std::string profile) {
     separateLogSetting = Config::getSeparateLogFilesEnabled();
 
     /////////// Experimental Tab
-    readbacksModeSetting = static_cast<int>(Config::readbackSpeed());
+    readbacksModeSetting = Config::readbacksEnabled() ? 1 : 0;
     readbackLinearImagesSetting = Config::getReadbackLinearImages();
     directMemoryAccessSetting = Config::directMemoryAccess();
     devkitConsoleSetting = Config::isDevKitConsole();

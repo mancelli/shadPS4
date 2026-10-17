@@ -3588,7 +3588,7 @@
 								<item>
 									<widget class="QLabel" name="label_readbacks_speed_title">
 										<property name="text">
-											<string>Readbacks Speed</string>
+											<string>Readbacks</string>
 										</property>
 										<property name="font">
 											<font>
@@ -3602,31 +3602,16 @@
 								<item>
 									<widget class="QComboBox" name="ReadbackSpeedComboBox">
 										<property name="toolTip">
-											<string>Select the readbacks speed mode</string>
+											<string>Readbacks: On (recommended) or Off</string>
 										</property>
 										<item>
 											<property name="text">
-												<string>Disable</string>
+												<string>Off</string>
 											</property>
 										</item>
 										<item>
 											<property name="text">
-												<string>Unsafe</string>
-											</property>
-										</item>
-										<item>
-											<property name="text">
-												<string>Low</string>
-											</property>
-										</item>
-										<item>
-											<property name="text">
-												<string>Default</string>
-											</property>
-										</item>
-										<item>
-											<property name="text">
-												<string>Fast</string>
+												<string>On</string>
 											</property>
 										</item>
 									</widget>
@@ -3641,16 +3626,7 @@
 											</font>
 										</property>
 										<property name="text">
-											<string notr="true">
-												<![CDATA[
-<b>Hint:</b><br/>
-Disable – Disable readbacks<br/>
-Unsafe – Old Fast Readbacks Speed - If day races dosent show brighness on Driveclub reload Event<br/>
-Low – Low readbacks Speed (Most Accurate)<br/>
-Default – Normal Readbacks Speed<br/>
-Fast – Fast readbacks Speed - If day races dosent show brighness on Driveclub reload Event<br/>
-                ]]>
-											</string>
+											<string notr="true"><![CDATA[<b>On</b> – data the GPU wrote is copied back when the game reads it. Recommended; UFC 3 and UFC 4 need it (without it fighters' heads break).<br/><b>Off</b> – faster, but games may show graphics glitches.]]></string>
 										</property>
 									</widget>
 								</item>

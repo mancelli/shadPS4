@@ -96,24 +96,13 @@ public:
         } else {
             bits.UnsetRange(start_page, end_page);
         }
-        const Config::ReadbackSpeed readback = Config::gpuReadbackSpeed();
         if constexpr (type == Type::CPU) {
             UpdateProtection<!enable, false>();
-        } else if (readback == Config::ReadbackSpeed::Fast) {
+        } else if (Config::readbacksEnabled()) {
+            // Read-protect pages the GPU wrote, so a CPU read copies the data back first.
             UpdateProtection<enable, true>();
-        } else if (readback == Config::ReadbackSpeed::Disable) {
+        } else {
             UpdateProtection<!enable, false>();
-        } else if (readback == Config::ReadbackSpeed::Unsafe) {
-            UpdateProtection<!enable, false>();
-        } else if (readback == Config::ReadbackSpeed::Low) {
-            UpdateProtection<enable, true>();
-        } else if (readback == Config::ReadbackSpeed::Default) {
-            UpdateProtection<enable, true>();
-        }
-        if (readback != Config::ReadbackSpeed::Low) {
-            for (size_t page = start_page; page != end_page && !enable; ++page) {
-                ++flushes[page];
-            }
         }
     }
 
@@ -140,20 +129,13 @@ public:
         RegionBits mask(bits, start_page, end_page);
 
         if constexpr (clear) {
-            const Config::ReadbackSpeed readback = Config::gpuReadbackSpeed();
             bits.UnsetRange(start_page, end_page);
             if constexpr (type == Type::CPU) {
                 UpdateProtection<true, false>();
-            } else if (readback == Config::ReadbackSpeed::Disable) {
+            } else if (Config::readbacksEnabled()) {
+                UpdateProtection<false, true>();
+            } else {
                 UpdateProtection<true, false>();
-            } else if (readback == Config::ReadbackSpeed::Unsafe) {
-                UpdateProtection<false, false>();
-            } else if (readback == Config::ReadbackSpeed::Fast) {
-                UpdateProtection<false, true>();
-            } else if (readback == Config::ReadbackSpeed::Low) {
-                UpdateProtection<false, true>();
-            } else if (readback == Config::ReadbackSpeed::Default) {
-                UpdateProtection<false, true>();
             }
         }
 

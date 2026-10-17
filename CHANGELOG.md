@@ -6,7 +6,30 @@ Each version: English first, then Russian. The text of a version is also its rel
 
 ## Beta (not released yet)
 
-No changes since 2026-10-14 yet. / Пока нет изменений после 2026-10-14.
+### English
+
+- Readbacks are a simple **On / Off** switch (Settings → Experimental). Readback Speed had five modes, but the
+  code had only two behaviours: Disable/Unsafe did not copy GPU data back, Low/Default/Fast did. Old settings
+  carry over: Disable and Unsafe become Off; Low, Default and Fast become On.
+- Off is no longer silently replaced for UFC 4. Turning readbacks off shows a warning: in UFC 3 and UFC 4 the
+  fighters' heads break (missing in UFC 4, distorted polygons on created fighters in UFC 3). On is the default.
+- Render Resolution (UFC 3 / UFC 4) has lower sizes for weak PCs: 1024x576, 960x540, 768x432 and 640x360
+  (experimental: not tried in the games yet).
+- FSR sharpening (RCAS) works again: the attenuation reached the shader as 250 instead of 0.25, which turned
+  sharpening off. It only matters when the window is larger than the game's picture (FSR upscales then).
+
+### Русский
+
+- Ридбеки теперь простой переключатель **On / Off** (Settings → Experimental). У Readback Speed было пять режимов,
+  но в коде работали только два варианта: Disable/Unsafe не копировали данные видеокарты обратно, Low/Default/Fast
+  копировали. Старые настройки переносятся: Disable и Unsafe становятся Off, Low, Default и Fast — On.
+- Для UFC 4 Off больше не подменяется втихую. При выключении ридбеков появляется предупреждение: в UFC 3 и UFC 4
+  ломаются головы бойцов (в UFC 4 пропадают, в UFC 3 у созданных бойцов полигоны выходят за голову). По
+  умолчанию стоит On.
+- Render Resolution (UFC 3 / UFC 4): для слабых ПК добавлены разрешения ниже 1280x720 — 1024x576, 960x540,
+  768x432 и 640x360 (экспериментально: в играх ещё не проверялись).
+- Снова работает резкость FSR (RCAS): ослабление доходило до шейдера как 250 вместо 0.25, и резкость была
+  выключена. Это важно только когда окно больше картинки игры (тогда FSR увеличивает её).
 
 ## 2026-10-14
 

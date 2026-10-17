@@ -2065,14 +2065,14 @@
 											</font>
 										</property>
 										<property name="text">
-											<string>Readbacks Speed</string>
+											<string>Readbacks</string>
 										</property>
 									</widget>
 								</item>
 								<item>
 									<widget class="QComboBox" name="ReadbackSpeedComboBox">
 										<property name="toolTip">
-											<string>Select the readbacks speed mode</string>
+											<string>Readbacks: On (recommended) or Off</string>
 										</property>
 										<property name="sizePolicy">
 											<sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -2088,27 +2088,12 @@
 										</property>
 										<item>
 											<property name="text">
-												<string>Disable</string>
+												<string>Off</string>
 											</property>
 										</item>
 										<item>
 											<property name="text">
-												<string>Unsafe</string>
-											</property>
-										</item>
-										<item>
-											<property name="text">
-												<string>Low</string>
-											</property>
-										</item>
-										<item>
-											<property name="text">
-												<string>Default</string>
-											</property>
-										</item>
-										<item>
-											<property name="text">
-												<string>Fast</string>
+												<string>On</string>
 											</property>
 										</item>
 									</widget>
@@ -2122,16 +2107,7 @@
 											</font>
 										</property>
 										<property name="text">
-											<string notr="true">
-
-												&lt;b&gt;Hint:&lt;/b&gt;&lt;br/&gt;
-												Disable – Disable readbacks&lt;br/&gt;
-												Unsafe – Old Fast Readbacks Speed - If day races dosent show brighness on Driveclub reload Event&lt;br/&gt;
-												Low – Low readbacks Speed (Most Accurate)&lt;br/&gt;
-												Default – Normal Readbacks Speed&lt;br/&gt;
-												Fast – Fast readbacks Speed - If day races dosent show brighness on Driveclub reload Event&lt;br/&gt;
-
-											</string>
+											<string notr="true">&lt;b&gt;On&lt;/b&gt; – data the GPU wrote is copied back when the game reads it. Recommended; UFC 3 and UFC 4 need it (without it fighters' heads break).&lt;br/&gt;&lt;b&gt;Off&lt;/b&gt; – faster, but games may show graphics glitches.</string>
 										</property>
 									</widget>
 								</item>

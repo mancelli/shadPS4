@@ -56,7 +56,8 @@ Other versions (for example 1.00) are not tested.
 3. Add your games folder in the launcher and start the game. The first start builds shaders and stutters once.
 
 Useful settings:
-- **Settings → Graphics → Render Resolution (UFC 3 / UFC 4)**: 1080p and higher.
+- **Settings → Graphics → Render Resolution (UFC 3 / UFC 4)**: 1080p and higher for a sharper picture;
+  1280x720 and lower (experimental) for more FPS on weak PCs.
 - **Settings → Graphics → FPS Limiter**: your frame rate, for example your monitor's refresh rate.
 - **Settings → General → Skip Intro Video**: on by default.
 
@@ -72,6 +73,8 @@ Useful settings:
 - [Shadlix README](https://github.com/diegolix29/shadPS4/blob/Shadlix/README.md): launcher features of Shadlix.
 - [shadPS4 README](https://github.com/shadps4-emu/shadPS4/blob/main/README.md): the original emulator, building,
   firmware files, keyboard mapping.
+- [Research notes](documents/research/README.md): for developers, how the fixes work, investigations
+  and a commit-by-commit map for porting them to newer builds.
 - License: [GPL-2.0-or-later](LICENSE), like shadPS4.
 
 ### Support
@@ -127,7 +130,8 @@ versions, and donations do not buy specific fixes or dates.
    подтормаживания.
 
 Полезные настройки:
-- **Settings → Graphics → Render Resolution (UFC 3 / UFC 4)**: 1080p и выше.
+- **Settings → Graphics → Render Resolution (UFC 3 / UFC 4)**: 1080p и выше для более чёткой картинки;
+  1280x720 и ниже (экспериментально) для большего FPS на слабых ПК.
 - **Settings → Graphics → FPS Limiter**: ваша частота кадров, например частота монитора.
 - **Settings → General → Skip Intro Video**: включено по умолчанию.
 
@@ -143,6 +147,8 @@ versions, and donations do not buy specific fixes or dates.
 - [README Shadlix](https://github.com/diegolix29/shadPS4/blob/Shadlix/README.md): возможности лаунчера Shadlix.
 - [README shadPS4](https://github.com/shadps4-emu/shadPS4/blob/main/README.md): оригинальный эмулятор, сборка,
   файлы прошивки, управление с клавиатуры.
+- [Исследования](documents/research/README.md): для разработчиков — как устроены исправления, разборы
+  проблем и карта коммитов для переноса в новые сборки.
 - Лицензия: [GPL-2.0-or-later](LICENSE), как у shadPS4.
 
 ### Поддержать

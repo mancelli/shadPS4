@@ -122,6 +122,13 @@ SettingsDialog::SettingsDialog(std::shared_ptr<CompatibilityInfoClass> m_compat_
 
     // Item data is the value stored in config.toml ("" = the game's own resolution).
     ui->renderResolutionComboBox->addItem(tr("Game default (1600x900)"), QString());
+    // Below 1600x900: less GPU work for weak PCs (the game scales the 3D scene up to its output).
+    // Sizes below 1280x720 keep 16:9 but were not tried in the games yet.
+    for (const char* resolution : {"640x360", "768x432", "960x540", "1024x576"}) {
+        ui->renderResolutionComboBox->addItem(QString::fromLatin1(resolution) +
+                                                  tr(" (experimental)"),
+                                              QString::fromLatin1(resolution));
+    }
     for (const char* resolution : {"1280x720", "1920x1080", "2560x1440", "3840x2160"}) {
         ui->renderResolutionComboBox->addItem(QString::fromLatin1(resolution),
                                               QString::fromLatin1(resolution));
@@ -1062,6 +1069,17 @@ SettingsDialog::SettingsDialog(std::shared_ptr<CompatibilityInfoClass> m_compat_
         ui->connectedNetworkCheckBox->installEventFilter(this);
         ui->ReadbacksLinearCheckBox->installEventFilter(this);
         ui->ReadbackSpeedComboBox->installEventFilter(this);
+
+        // Readbacks: index 0 = Off, 1 = On. Warn when the player turns them off.
+        connect(ui->ReadbackSpeedComboBox, &QComboBox::activated, this, [this](int index) {
+            if (index == 0) {
+                QMessageBox::warning(
+                    this, tr("Readbacks Off"),
+                    tr("With readbacks off, games that read GPU results on the CPU show graphics "
+                       "glitches.\nIn UFC 3 and UFC 4 the fighters' heads break (missing or "
+                       "distorted heads).\nTurn readbacks on again if you see such problems."));
+            }
+        });
         ui->MemorySpinBox->installEventFilter(this);
         ui->FmemSpinBox->installEventFilter(this);
         ui->SkipsCheckBox->installEventFilter(this);
@@ -1226,8 +1244,9 @@ void SettingsDialog::LoadValuesFromConfig() {
     ui->HomeHotkeysCheckBox->setChecked(
         toml::find_or<bool>(data, "General", "UseHomeButtonForHotkeys", false));
     ui->screenTipBox->setChecked(toml::find_or<bool>(data, "General", "screenTipDisable", false));
+    // Stored values: 0 Disable, 1 Unsafe (both off), 2 Low, 3 Default, 4 Fast (all on).
     ui->ReadbackSpeedComboBox->setCurrentIndex(
-        toml::find_or<int>(data, "GPU", "readbackSpeedMode", 0));
+        toml::find_or<int>(data, "GPU", "readbackSpeedMode", 2) <= 1 ? 0 : 1);
 
     ui->SkipsCheckBox->setChecked(toml::find_or<bool>(data, "GPU", "shaderSkipsEnabled", false));
     ui->MemorySpinBox->setValue(toml::find_or<int>(data, "General", "extraDmemInMbytes", 0));
@@ -1726,9 +1745,9 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
     } else if (elementName == "shadnetAccountsGroupBox") {
         text = tr("ShadNet Accounts:\\nSign in each player to ShadNet using their NPID and password.\\nOnce signed in, the player's ShadNet online ID is used in place of their local username.");
     } else if (elementName == "renderResolutionGroupBox") {
-        text = tr("Render Resolution (UFC 3 / UFC 4):\\nThe resolution UFC 3 and UFC 4 render their 3D scene at. By default the games use 1600x900 (the base PS4 resolution) and scale it to the window.\\n1920x1080 gives a sharp picture on a 1080p screen. Higher values look sharper but need a faster GPU and more video memory; values above 1920x1080 were not tested.\\nSupported: UFC 4 (CUSA14204, CUSA14209) and UFC 3 (CUSA06534); other games ignore this setting.\\nTakes effect the next time the game starts.");
+        text = tr("Render Resolution (UFC 3 / UFC 4):\\nThe resolution UFC 3 and UFC 4 render their 3D scene at. By default the games use 1600x900 (the base PS4 resolution) and scale it to their output picture.\\n\\nLower (for weak PCs): 1280x720 and below need less GPU power and give more FPS when the GPU is the limit; the picture gets blurrier. Sizes below 1280x720 are experimental: they were not tried in the games yet, so menus or effects may look wrong.\\nHigher: 1920x1080 gives a sharp picture on a 1080p screen. Higher values need a faster GPU and more video memory; values above 1920x1080 were not tested.\\n\\nSupported: UFC 4 (CUSA14204, CUSA14209) and UFC 3 (CUSA06534); other games ignore this setting.\\nTakes effect the next time the game starts.");
     } else if (elementName == "ReadbackSpeedComboBox") {
-        text = tr("Readback Speed:\\nWhether the emulator copies data the GPU wrote back to game memory when the game reads it on the CPU (for example physics, animation or skinning results calculated on the GPU).\\n\\nDisable / Unsafe: no readbacks (in this build both modes behave the same). Fastest. Games that read GPU results on the CPU may show missing objects, broken effects or freeze.\\nLow / Default / Fast: the data is copied when the game reads it (in this build all three behave the same). Correct, but each such read waits for the GPU (short stutters in games that read a lot).\\n\\nUFC 4 needs readbacks: without them the fighters' heads are invisible. For UFC 4, Disable and Unsafe therefore run as Low.\\nOther games: start with Disable and choose Low only if a game has glitches without it.");
+        text = tr("Readbacks:\\nWhether the emulator copies data the GPU wrote back to game memory when the game reads it on the CPU (for example animation, skinning or physics results calculated on the GPU).\\n\\nOn (recommended): the data is copied when the game reads it. Correct, but each such read waits for the GPU (short stutters in games that read a lot).\\nOff: nothing is copied. Fastest, but games that read GPU results show graphics glitches.\\n\\nUFC 3 and UFC 4 need readbacks: with Off the fighters' heads break (missing or distorted heads).\\nOlder versions had five modes: Disable and Unsafe are now Off; Low, Default and Fast are now On (they behaved the same).");
     } else if (elementName == "MemorySpinBox") {
         text = tr("Extra Direct Memory (Dmem):\\nAdds memory on top of what a PS4 has.\\nSome mods and high-resolution patches need more memory than a PS4 has and crash without it.\\nUses the same amount of your PC RAM. Leave at 0 unless a mod asks for it.");
     } else if (elementName == "FmemSpinBox") {
@@ -1928,8 +1947,7 @@ void SettingsDialog::UpdateSettings() {
     Config::setDisableHardcodedHotkeys(ui->HotkeysCheckBox->isChecked());
     Config::setUseHomeButtonForHotkeys(ui->HomeHotkeysCheckBox->isChecked());
     Config::setScreenTipDisable(ui->screenTipBox->isChecked());
-    Config::setReadbackSpeed(
-        static_cast<Config::ReadbackSpeed>(ui->ReadbackSpeedComboBox->currentIndex()));
+    Config::setReadbacksEnabled(ui->ReadbackSpeedComboBox->currentIndex() == 1);
 
     Config::setShaderSkipsEnabled(ui->SkipsCheckBox->isChecked());
     Config::setFpsLimit(ui->fpsSlider->value());
